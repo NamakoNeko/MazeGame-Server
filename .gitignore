@@ -1,24 +1,97 @@
-# Compiled class file
+############################
+# Eclipse
+############################
+.metadata/
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+.project
+.classpath
+.factorypath
+
+############################
+# STS (Spring Tool Suite)
+############################
+.springBeans
+.sts4-cache/
+
+############################
+# IntelliJ
+############################
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+############################
+# VS Code
+############################
+.vscode/
+
+############################
+# Java / Maven / Gradle
+############################
+target/
+build/
+out/
 *.class
 
-# Log file
+############################
+# Logs
+############################
+logs/
 *.log
 
-# BlueJ files
-*.ctxt
+############################
+# OS
+############################
+.DS_Store
+Thumbs.db
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
+############################
+# Spring Boot
+############################
+application-*.yml
+application-*.properties
 
-# Package Files #
+# 敏感資料
+.env
+
+############################
+# Test / Coverage
+############################
+coverage/
+*.exec
+
+############################
+# Package Files
+############################
 *.jar
 *.war
-*.nar
 *.ear
-*.zip
-*.tar.gz
-*.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
-replay_pid*
+############################
+# Generated files
+############################
+generated-sources/
+annotations/
+
+############################
+# Database
+############################
+*.db
+*.sqlite
+
+############################
+# Upload / temp
+############################
+uploads/
+temp/
