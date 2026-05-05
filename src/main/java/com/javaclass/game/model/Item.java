@@ -17,22 +17,28 @@ public class Item {
     private String name;
 
     @Column(nullable = false, length = 50)
-    private String type; // WEAPON, ARMOR, POTION
+    private String type;        // WEAPON, ARMOR, POTION
+
+    @Column(length = 50)
+    private String slot;        // HEAD (頭), CHEST (甲), WEAPON (主武器), OFF_HAND (副手), SHOES (鞋), NONE (無)
+
+    @Column(length = 20)
+    private String rarity;      // WHITE (白), BLUE (藍), YELLOW (黃)
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    // --- 新增屬性欄位 ---
-    
-    private Double attack;    // 武器攻擊力 或 藥水攻擊加成
-    
-    private Integer defense;  // 防具防禦力 或 藥水防禦加成
-    
-    private Integer hp;       // 防具生命值加成 或 藥水回復量
-    
-    private Integer duration; // 效果持續時間 (秒)，適用於短暫提高能力的藥水
+    private Integer price;
+    // --- 模板基礎屬性 (可用作基礎加成或藥水效果) ---
+    private Integer attack;      // 基礎攻擊力
+    private Integer defense;    // 基礎防禦力
+    private Integer hp;         // 基礎生命值
+    private Integer duration;   // 藥水效果持續時間 (秒)
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "is_deleted")
+    private boolean isDeleted = false; // 🔥 補上這個，軟刪除才有用
+
+    @Column(name = "create_time", updatable = false) // 🔥 改成 create_time
     private LocalDateTime createdAt;
 
     @PrePersist
