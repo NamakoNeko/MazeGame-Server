@@ -1,6 +1,6 @@
 package com.javaclass.game.service;
 
-import com.javaclass.game.constants.MenuPermissionDefiner;
+import com.javaclass.game.constants.AuthDefiner;
 import com.javaclass.game.constants.MenuPermissionDefiner.RoleLevel;
 import com.javaclass.game.dao.AdminDao;
 import com.javaclass.game.model.Admin;
@@ -42,7 +42,7 @@ public class AuthService {
         }
 
         String token = jwtUtility.generateToken(admin.getId(), admin.getRole());
-        LocalDateTime expiresAt = LocalDateTime.now().plusHours(MenuPermissionDefiner.TOKEN_VALID_HOURS);
+        LocalDateTime expiresAt = LocalDateTime.now().plusHours(AuthDefiner.TOKEN_VALID_HOURS);
         RoleLevel userRoleLevel = RoleLevel.valueOf(admin.getRole());
 
         return LoginResponse.builder()

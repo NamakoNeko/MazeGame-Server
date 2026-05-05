@@ -1,6 +1,7 @@
 package com.javaclass.game.config;
 
 import com.javaclass.game.utility.JwtAuthenticationFilter;
+import com.javaclass.game.constants.AuthDefiner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -30,13 +31,9 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authorizeHttpRequests(auth -> auth
-                // 開放登入 API
-                .requestMatchers("/api/auth/login").permitAll()
-                
-                // 其餘請求才需要 JWT 驗證
+                .requestMatchers(AuthDefiner.LOGIN_URL).permitAll()
                 .anyRequest().authenticated()
             )
-            // 在處理請求前，先過濾 JWT Token
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return httpSecurity.build();

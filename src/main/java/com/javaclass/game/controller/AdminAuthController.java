@@ -1,5 +1,6 @@
 package com.javaclass.game.controller;
 
+import com.javaclass.game.constants.AuthDefiner;
 import com.javaclass.game.model.LoginResponse;
 import com.javaclass.game.service.AuthService;
 import com.javaclass.game.utility.ApiResponse;
@@ -11,16 +12,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/auth")
-public class AuthController {
+@RequestMapping(AuthDefiner.ADMIN_AUTH_BASE_URL)
+public class AdminAuthController {
 
     private final AuthService authService;
 
-    public AuthController(AuthService authService) {
+    public AdminAuthController(AuthService authService) {
         this.authService = authService;
     }
 
-    @PostMapping("/login")
+    @PostMapping(AuthDefiner.LOGIN_PATH)
     public ResponseEntity<ApiResponse<?>> login(@RequestBody LoginRequest loginRequest) {
         if (loginRequest.getAccount() == null || loginRequest.getAccount().isBlank()) {
             return ResponseEntity

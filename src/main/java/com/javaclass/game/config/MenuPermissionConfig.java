@@ -14,7 +14,10 @@ public class MenuPermissionConfig {
         return List.of(
 
             new MenuItemConfig(
-                "player", "玩家管理", "/players", RoleLevel.Operator,
+                MenuPermissionDefiner.PLAYER_MENU_KEY,
+                MenuPermissionDefiner.PLAYER_MENU_NAME,
+                MenuPermissionDefiner.PLAYER_PATH,
+                RoleLevel.Operator,
                 Map.of(
                     MenuPermissionDefiner.QUERY_TEXT,  RoleLevel.Operator,
                     MenuPermissionDefiner.EDIT_TEXT,   RoleLevel.Admin,
@@ -24,7 +27,10 @@ public class MenuPermissionConfig {
             ),
 
             new MenuItemConfig(
-                "item", "道具管理", "/items", RoleLevel.Admin,
+                MenuPermissionDefiner.ITEM_MENU_KEY,
+                MenuPermissionDefiner.ITEM_MENU_NAME,
+                MenuPermissionDefiner.ITEM_PATH,
+                RoleLevel.Admin,
                 Map.of(
                     MenuPermissionDefiner.QUERY_TEXT,  RoleLevel.Admin,
                     MenuPermissionDefiner.CREATE_TEXT, RoleLevel.SuperAdmin,
@@ -34,7 +40,10 @@ public class MenuPermissionConfig {
             ),
 
             new MenuItemConfig(
-                "inventory", "背包管理", "/inventory", RoleLevel.Operator,
+                MenuPermissionDefiner.INVENTORY_MENU_KEY,
+                MenuPermissionDefiner.INVENTORY_MENU_NAME,
+                MenuPermissionDefiner.INVENTORY_PATH,
+                RoleLevel.Operator,
                 Map.of(
                     MenuPermissionDefiner.QUERY_TEXT,  RoleLevel.Operator,
                     MenuPermissionDefiner.GRANT_TEXT,  RoleLevel.Admin,
@@ -43,7 +52,10 @@ public class MenuPermissionConfig {
             ),
 
             new MenuItemConfig(
-                "operationLog", "操作紀錄", "/logs", RoleLevel.Operator,
+                MenuPermissionDefiner.OPERATION_LOG_MENU_KEY,
+                MenuPermissionDefiner.OPERATION_LOG_MENU_NAME,
+                MenuPermissionDefiner.OPERATION_LOG_PATH,
+                RoleLevel.Operator,
                 Map.of(
                     MenuPermissionDefiner.QUERY_SELF_TEXT, RoleLevel.Operator,
                     MenuPermissionDefiner.QUERY_ALL_TEXT,  RoleLevel.Admin
@@ -51,7 +63,10 @@ public class MenuPermissionConfig {
             ),
 
             new MenuItemConfig(
-                "accountManagement", "帳號管理", "/accounts", RoleLevel.SuperAdmin,
+                MenuPermissionDefiner.ACCOUNT_MANAGEMENT_MENU_KEY,
+                MenuPermissionDefiner.ACCOUNT_MANAGEMENT_MENU_NAME,
+                MenuPermissionDefiner.ACCOUNT_MANAGEMENT_PATH,
+                RoleLevel.SuperAdmin,
                 Map.of(
                     MenuPermissionDefiner.CREATE_TEXT, RoleLevel.SuperAdmin
                 )
