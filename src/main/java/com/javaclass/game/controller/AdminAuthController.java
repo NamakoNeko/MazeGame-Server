@@ -26,13 +26,13 @@ public class AdminAuthController {
         if (loginRequest.getAccount() == null || loginRequest.getAccount().isBlank()) {
             return ResponseEntity
                 .badRequest()
-                .body(ApiResponse.failure(400, "帳號為必填欄位"));
+                .body(ApiResponse.failure(400, AuthDefiner.ERROR_ACCOUNT_REQUIRED));
         }
 
         if (loginRequest.getPassword() == null || loginRequest.getPassword().isBlank()) {
             return ResponseEntity
                 .badRequest()
-                .body(ApiResponse.failure(400, "密碼為必填欄位"));
+                .body(ApiResponse.failure(400, AuthDefiner.ERROR_PASSWORD_REQUIRED));
         }
 
         try {

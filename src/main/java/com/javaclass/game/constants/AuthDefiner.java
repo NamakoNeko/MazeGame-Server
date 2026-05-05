@@ -9,4 +9,7 @@ public class AuthDefiner {
     public static final String LOGIN_PATH             = "/login";
 
     public static final String LOGIN_URL              = ADMIN_AUTH_BASE_URL + LOGIN_PATH;
+
+    public static final String ERROR_ACCOUNT_REQUIRED          = "帳號為必填欄位";
+    public static final String ERROR_PASSWORD_REQUIRED         = "密碼為必填欄位";
 }
