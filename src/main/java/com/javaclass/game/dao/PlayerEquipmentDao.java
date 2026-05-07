@@ -4,7 +4,10 @@ import com.javaclass.game.model.PlayerEquipment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface PlayerEquipmentDao extends JpaRepository<PlayerEquipment, Long> {
-    // 這裡通常使用繼承的 findById(playerId) 即可
+
+    Optional<PlayerEquipment> findByAccountId(String accountId);
 }

@@ -1,7 +1,5 @@
 package com.javaclass.game.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.ToString;
@@ -11,13 +9,16 @@ import lombok.ToString;
 @Data
 @ToString(exclude = "player")
 public class PlayerEquipment {
+
     @Id
-    private Long playerId; // 與 Player 共用 ID
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "account_id", nullable = false, unique = true, length = 50)
+    private String accountId;
 
     @OneToOne
-    @MapsId
-    @JoinColumn(name = "player_id")
-    @JsonIgnore
+    @JoinColumn(name = "account_id", referencedColumnName = "account_id", insertable = false, updatable = false)
     private Player player;
 
     private Long headId;
