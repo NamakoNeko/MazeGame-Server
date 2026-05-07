@@ -7,7 +7,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class UpdatePlayerRequest {
-
-    private String nickname;
+public class HotkeyRequest {
+    private Long playerItemId;
 }

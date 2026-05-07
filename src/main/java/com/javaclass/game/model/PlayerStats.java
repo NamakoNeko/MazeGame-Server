@@ -23,4 +23,5 @@ public class PlayerStats {
     private Integer hp = 100;
     private Double atk = 10.0;
     private Integer def = 5;
+    private Long money = 0L;
 }

@@ -22,9 +22,6 @@ public class Item {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "effect", columnDefinition = "TEXT")
-    private String effect;
-
     @Column(name = "type", nullable = false)
     private Integer type;
 

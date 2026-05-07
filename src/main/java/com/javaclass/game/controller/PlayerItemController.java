@@ -8,6 +8,8 @@ import com.javaclass.game.dto.GainPlayerItemResponse;
 import com.javaclass.game.dto.MovePlayerItemRequest;
 import com.javaclass.game.dto.MovePlayerItemResponse;
 import com.javaclass.game.dto.PlayerItemResult;
+import com.javaclass.game.dto.SellPlayerItemRequest;
+import com.javaclass.game.dto.SellPlayerItemResponse;
 import com.javaclass.game.service.PlayerItemService;
 import com.javaclass.game.utility.ApiResponse;
 import com.javaclass.game.utility.JwtUtility;
@@ -119,6 +121,28 @@ public class PlayerItemController {
         try {
             String accountId = jwtUtility.extractPlayerAccountId(jwtUtility.extractToken(authorizationHeader));
             MovePlayerItemResponse response = playerItemsService.moveItem(accountId, movePlayerItemRequest);
+            return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (IllegalArgumentException illegalArgumentException) {
+            return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.failure(400, illegalArgumentException.getMessage()));
+        }
+    }
+
+    @PostMapping(PlayerItemDefiner.SELL_PATH)
+    public ResponseEntity<ApiResponse<?>> sellItem(
+        @RequestHeader("Authorization") String authorizationHeader,
+        @RequestBody SellPlayerItemRequest sellPlayerItemRequest
+    ) {
+        if (sellPlayerItemRequest.getPlayerItemId() == null) {
+            return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.failure(400, PlayerItemDefiner.ERROR_ITEM_ID_REQUIRED));
+        }
+
+        try {
+            String accountId = jwtUtility.extractPlayerAccountId(jwtUtility.extractToken(authorizationHeader));
+            SellPlayerItemResponse response = playerItemsService.sellItem(accountId, sellPlayerItemRequest);
             return ResponseEntity.ok(ApiResponse.success(response));
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity

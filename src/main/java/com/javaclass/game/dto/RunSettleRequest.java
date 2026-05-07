@@ -7,7 +7,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class UpdatePlayerRequest {
-
-    private String nickname;
+public class RunSettleRequest {
+    private Boolean success;
+    private Integer coinsEarned;
+    private Integer elapsedSeconds;
 }

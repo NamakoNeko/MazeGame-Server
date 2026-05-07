@@ -7,7 +7,9 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class UpdatePlayerRequest {
-
-    private String nickname;
+public class BuyItemRequest {
+    private Long itemId;
+    private Integer amount;
+    private Integer location;
+    private Integer position;
 }

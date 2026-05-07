@@ -2,13 +2,18 @@ package com.javaclass.game.constants;
 
 public class PlayerItemDefiner {
 
-    public static final int ITEM_TYPE_EQUIPMENT  = 1;
-    public static final int ITEM_TYPE_CONSUMABLE = 2;
+    public static final int ITEM_TYPE_HELMET     = 1;
+    public static final int ITEM_TYPE_ARMOR      = 2;
+    public static final int ITEM_TYPE_WEAPON     = 3;
+    public static final int ITEM_TYPE_SHIELD     = 4;
+    public static final int ITEM_TYPE_BOOTS      = 5;
+    public static final int ITEM_TYPE_CONSUMABLE = 6;
 
     public static final String STORAGE_BASE_URL  = "/api/game/storage";
     public static final String GAIN_PATH         = "/gain";
     public static final String CONSUME_PATH      = "/consume";
     public static final String MOVE_PATH         = "/move";
+    public static final String SELL_PATH         = "/sell";
 
     public static final int LOCATION_INVENTORY   = 1;
     public static final int LOCATION_WAREHOUSE   = 2;
