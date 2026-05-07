@@ -51,6 +51,12 @@ public class JwtUtility {
             .compact();
     }
 
+    private static final String BEARER_PREFIX = "Bearer ";
+
+    public String extractToken(String authorizationHeader) {
+        return authorizationHeader.substring(BEARER_PREFIX.length());
+    }
+
     public Claims parseToken(String token) {
         return Jwts.parserBuilder()
             .setSigningKey(getSigningKey())
