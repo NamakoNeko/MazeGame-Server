@@ -5,6 +5,7 @@ import com.javaclass.game.dto.GrantItemRequest;
 import com.javaclass.game.dto.InventoryItemResult;
 import com.javaclass.game.dto.RemoveItemRequest;
 import com.javaclass.game.service.InventoryService;
+import com.javaclass.game.service.OperationLogService;
 import com.javaclass.game.utility.ApiResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,9 +18,11 @@ import org.springframework.web.bind.annotation.*;
 public class AdminInventoryController {
 
     private final InventoryService inventoryService;
+    private final OperationLogService operationLogService;
 
-    public AdminInventoryController(InventoryService inventoryService) {
+    public AdminInventoryController(InventoryService inventoryService, OperationLogService operationLogService) {
         this.inventoryService = inventoryService;
+        this.operationLogService = operationLogService;
     }
 
     @GetMapping
@@ -58,6 +61,12 @@ public class AdminInventoryController {
 
         try {
             inventoryService.grantItem(accountId, grantItemRequest);
+            operationLogService.record(
+                "GRANT_ITEM",
+                "INVENTORY",
+                accountId,
+                "itemId=" + grantItemRequest.getItemId() + ", quantity=" + grantItemRequest.getQuantity()
+            );
             return ResponseEntity.ok(ApiResponse.success(null));
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity
@@ -91,6 +100,12 @@ public class AdminInventoryController {
 
         try {
             inventoryService.removeItem(accountId, removeItemRequest);
+            operationLogService.record(
+                "REMOVE_ITEM",
+                "INVENTORY",
+                accountId,
+                "itemId=" + removeItemRequest.getItemId() + ", quantity=" + removeItemRequest.getQuantity()
+            );
             return ResponseEntity.ok(ApiResponse.success(null));
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity

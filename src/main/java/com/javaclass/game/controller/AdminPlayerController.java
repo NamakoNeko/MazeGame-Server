@@ -5,6 +5,7 @@ import com.javaclass.game.dto.PlayerListResult;
 import com.javaclass.game.dto.UpdatePlayerRequest;
 import com.javaclass.game.dto.UpdatePlayerStatusRequest;
 import com.javaclass.game.service.PlayerService;
+import com.javaclass.game.service.OperationLogService;
 import com.javaclass.game.utility.ApiResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,9 +19,11 @@ import org.springframework.web.bind.annotation.*;
 public class AdminPlayerController {
 
     private final PlayerService playerService;
+    private final OperationLogService operationLogService;
 
-    public AdminPlayerController(PlayerService playerService) {
+    public AdminPlayerController(PlayerService playerService, OperationLogService operationLogService) {
         this.playerService = playerService;
+        this.operationLogService = operationLogService;
     }
 
     @GetMapping
@@ -65,6 +68,7 @@ public class AdminPlayerController {
 
         try {
             playerService.updatePlayer(id, updatePlayerRequest);
+            operationLogService.record("UPDATE_PLAYER", "PLAYER", String.valueOf(id), updatePlayerRequest.getNickname());
             return ResponseEntity.ok(ApiResponse.success(null));
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity
@@ -87,6 +91,7 @@ public class AdminPlayerController {
 
         try {
             playerService.updatePlayerStatus(accountId, updatePlayerStatusRequest);
+            operationLogService.record("UPDATE_PLAYER_STATUS", "PLAYER", accountId, updatePlayerStatusRequest.getStatus());
             return ResponseEntity.ok(ApiResponse.success(null));
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity
