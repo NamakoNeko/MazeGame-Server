@@ -18,8 +18,8 @@ public class Inventory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "account_id", nullable = false)
-    private String accountId;
+    @Column(name = "player_id", nullable = false)
+    private Long playerId;
 
     @Column(name = "item_id", nullable = false)
     private Long itemId;

@@ -11,7 +11,7 @@ import java.util.Optional;
 @Repository
 public interface InventoryDao extends JpaRepository<Inventory, Long> {
 
-    Page<Inventory> findByAccountId(String accountId, Pageable pageable);
+    Page<Inventory> findByPlayerId(Long playerId, Pageable pageable);
 
-    Optional<Inventory> findByAccountIdAndItemId(String accountId, Long itemId);
+    Optional<Inventory> findByPlayerIdAndItemId(Long playerId, Long itemId);
 }

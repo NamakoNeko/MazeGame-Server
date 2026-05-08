@@ -10,9 +10,11 @@ import java.util.Optional;
 @Repository
 public interface PlayerItemDao extends JpaRepository<PlayerItem, Long> {
 
-    List<PlayerItem> findByAccountId(String accountId);
+    List<PlayerItem> findByPlayerId(Long playerId);
 
-    Optional<PlayerItem> findByAccountIdAndItemIdAndLocation(String accountId, Long itemId, Integer location);
+    Optional<PlayerItem> findByPlayerIdAndItemIdAndLocation(Long playerId, Long itemId, Integer location);
 
-    Optional<PlayerItem> findByAccountIdAndLocationAndPosition(String accountId, Integer location, Integer position);
+    Optional<PlayerItem> findByPlayerIdAndLocationAndPosition(Long playerId, Integer location, Integer position);
+
+    void deleteByPlayerIdAndLocation(Long playerId, Integer location);
 }

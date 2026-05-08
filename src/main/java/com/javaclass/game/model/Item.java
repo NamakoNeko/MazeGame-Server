@@ -22,9 +22,6 @@ public class Item {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "effect", columnDefinition = "TEXT")
-    private String effect;
-
     @Column(name = "type", nullable = false)
     private Integer type;
 
@@ -33,4 +30,7 @@ public class Item {
 
     @Column(name = "max_amount", nullable = false)
     private Integer maxAmount;
+
+    @Column(name = "model_path", length = 255)
+    private String modelPath;
 }

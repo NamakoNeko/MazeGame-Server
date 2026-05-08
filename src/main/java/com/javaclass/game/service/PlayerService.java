@@ -62,10 +62,6 @@ public class PlayerService {
             player.setNickname(updatePlayerRequest.getNickname());
         }
 
-        if (updatePlayerRequest.getLevel() != null) {
-            player.setLevel(updatePlayerRequest.getLevel());
-        }
-
         playerDao.save(player);
     }
 
@@ -88,7 +84,6 @@ public class PlayerService {
             .id(player.getId())
             .accountId(player.getAccountId())
             .nickname(player.getNickname())
-            .level(player.getLevel())
             .status(player.getStatus())
             .createdAt(player.getCreatedAt())
             .lastLoginAt(player.getLastLoginAt())

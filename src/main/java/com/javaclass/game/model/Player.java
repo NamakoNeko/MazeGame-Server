@@ -30,14 +30,8 @@ public class Player {
     @Column(name = "email", nullable = false, unique = true)
     private String email;
 
-    @Column(name = "level")
-    private Integer level = 1;
-
     @Column(name = "status", nullable = false, length = 20)
     private String status = "ACTIVE";
-
-    @Column(name = "money")
-    private Long money = 0L;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

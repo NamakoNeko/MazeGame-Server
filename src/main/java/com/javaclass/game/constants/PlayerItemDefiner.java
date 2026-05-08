@@ -38,6 +38,9 @@ public class PlayerItemDefiner {
     public static final String GAIN_PATH         = "/gain";
     public static final String CONSUME_PATH      = "/consume";
     public static final String MOVE_PATH         = "/move";
+    public static final String SELL_PATH         = "/sell";
+    public static final String CLEAR_LOCATION_PATH = "/location/{location}";
+    public static final String REPLACE_LOCATION_PATH = "/location/{location}/replace";
 
     public static final String EQUIPMENT_BASE_URL = "/api/game/equipment";
     public static final String EQUIP_PATH          = "/equip";

@@ -11,14 +11,11 @@ import lombok.ToString;
 public class PlayerEquipment {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(name = "account_id", nullable = false, unique = true, length = 50)
-    private String accountId;
+    private Long playerId;
 
     @OneToOne
-    @JoinColumn(name = "account_id", referencedColumnName = "account_id", insertable = false, updatable = false)
+    @MapsId
+    @JoinColumn(name = "player_id")
     private Player player;
 
     private Long headId;

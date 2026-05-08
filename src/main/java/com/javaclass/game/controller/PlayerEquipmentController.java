@@ -26,9 +26,9 @@ public class PlayerEquipmentController {
     public ResponseEntity<ApiResponse<?>> getEquipment(
         @RequestHeader("Authorization") String authorizationHeader
     ) {
-        String accountId = jwtUtility.extractPlayerAccountId(jwtUtility.extractToken(authorizationHeader));
+        Long playerId = jwtUtility.extractPlayerId(jwtUtility.extractToken(authorizationHeader));
         try {
-            EquipmentResult equipmentResult = playerEquipmentService.getEquipment(accountId);
+            EquipmentResult equipmentResult = playerEquipmentService.getEquipment(playerId);
             return ResponseEntity.ok(ApiResponse.success(equipmentResult));
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity
@@ -55,8 +55,8 @@ public class PlayerEquipmentController {
         }
 
         try {
-            String accountId = jwtUtility.extractPlayerAccountId(jwtUtility.extractToken(authorizationHeader));
-            EquipmentResult equipmentResult = playerEquipmentService.equip(accountId, equipRequest);
+            Long playerId = jwtUtility.extractPlayerId(jwtUtility.extractToken(authorizationHeader));
+            EquipmentResult equipmentResult = playerEquipmentService.equip(playerId, equipRequest);
             return ResponseEntity.ok(ApiResponse.success(equipmentResult));
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity
@@ -83,8 +83,8 @@ public class PlayerEquipmentController {
         }
 
         try {
-            String accountId = jwtUtility.extractPlayerAccountId(jwtUtility.extractToken(authorizationHeader));
-            EquipmentResult equipmentResult = playerEquipmentService.unequip(accountId, unequipRequest);
+            Long playerId = jwtUtility.extractPlayerId(jwtUtility.extractToken(authorizationHeader));
+            EquipmentResult equipmentResult = playerEquipmentService.unequip(playerId, unequipRequest);
             return ResponseEntity.ok(ApiResponse.success(equipmentResult));
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity

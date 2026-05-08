@@ -6,6 +6,8 @@ import com.javaclass.game.dto.PlayerLoginResponse;
 import com.javaclass.game.dto.PlayerRegisterRequest;
 import com.javaclass.game.dto.PlayerRegisterResponse;
 import com.javaclass.game.model.Player;
+import com.javaclass.game.model.PlayerEquipment;
+import com.javaclass.game.model.PlayerStats;
 import com.javaclass.game.utility.JwtUtility;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -38,7 +40,7 @@ public class PlayerAuthService {
             throw new IllegalArgumentException(AuthDefiner.ERROR_INVALID_CREDENTIALS);
         }
 
-        String token = jwtUtility.generatePlayerToken(player.getAccountId());
+        String token = jwtUtility.generatePlayerToken(player.getId());
         LocalDateTime expiresAt = LocalDateTime.now().plusHours(AuthDefiner.TOKEN_VALID_HOURS);
 
         return PlayerLoginResponse.builder()
@@ -46,7 +48,7 @@ public class PlayerAuthService {
             .playerId(player.getId())
             .accountId(player.getAccountId())
             .nickname(player.getNickname())
-            .money(player.getMoney())
+            .money(player.getStats() != null ? player.getStats().getMoney() : 0L)
             .expiresAt(expiresAt)
             .build();
     }
@@ -62,6 +64,14 @@ public class PlayerAuthService {
         newPlayer.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         newPlayer.setNickname(registerRequest.getNickname());
         newPlayer.setEmail(registerRequest.getEmail());
+
+        PlayerStats stats = new PlayerStats();
+        stats.setPlayer(newPlayer);
+        newPlayer.setStats(stats);
+
+        PlayerEquipment equipment = new PlayerEquipment();
+        equipment.setPlayer(newPlayer);
+        newPlayer.setEquipment(equipment);
 
         Player savedPlayer = playerDao.save(newPlayer);
 

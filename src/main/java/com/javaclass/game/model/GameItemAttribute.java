@@ -13,17 +13,17 @@ import lombok.Setter;
 public class GameItemAttribute {
 
     @Id
-    @Column(name = "item_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "item_id", nullable = false)
     private Long itemId;
 
-    @Column(name = "hp")
-    private Integer hp;
+    @Column(name = "effect_type", nullable = false, length = 50)
+    private String effectType;
 
-    @Column(name = "atk")
-    private Integer atk;
-
-    @Column(name = "def")
-    private Integer def;
+    @Column(name = "value", nullable = false)
+    private Integer value;
 
     @Column(name = "duration")
     private Integer duration;

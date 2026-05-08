@@ -10,5 +10,4 @@ import lombok.Setter;
 public class UpdatePlayerRequest {
 
     private String nickname;
-    private Integer level;
 }

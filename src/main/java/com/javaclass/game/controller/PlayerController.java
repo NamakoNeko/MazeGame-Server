@@ -1,6 +1,8 @@
 package com.javaclass.game.controller;
 
 import com.javaclass.game.dao.PlayerDao;
+import com.javaclass.game.dao.PlayerEquipmentDao;
+import com.javaclass.game.dao.PlayerStatsDao;
 import com.javaclass.game.model.Player;
 import com.javaclass.game.model.PlayerStats;
 import com.javaclass.game.model.PlayerEquipment;
@@ -8,12 +10,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/player")
 public class PlayerController {
 
     @Autowired
     private PlayerDao playerDao;
+
+    @Autowired
+    private PlayerStatsDao playerStatsDao;
+
+    @Autowired
+    private PlayerEquipmentDao playerEquipmentDao;
 
     /**
      * 獲取大廳基本資料 (只包含 ID, 帳號, 暱稱, 錢)
@@ -24,7 +34,13 @@ public class PlayerController {
         Player player = playerDao.findById(id)
                 .orElseThrow(() -> new RuntimeException("找不到玩家"));
         // 實務上建議這裡也用 DTO，這邊先回傳實體以便測試
-        return ResponseEntity.ok(player); 
+        Long money = player.getStats() != null ? player.getStats().getMoney() : 0L;
+        return ResponseEntity.ok(Map.of(
+            "id", player.getId(),
+            "accountId", player.getAccountId(),
+            "nickname", player.getNickname() == null ? "" : player.getNickname(),
+            "money", money
+        )); 
     }
 
     /**
@@ -34,7 +50,13 @@ public class PlayerController {
     @GetMapping("/{id}/stats")
     public ResponseEntity<PlayerStats> getPlayerStats(@PathVariable Long id) {
         Player player = playerDao.findById(id).orElseThrow();
-        return ResponseEntity.ok(player.getStats());
+        PlayerStats stats = player.getStats();
+        if (stats == null) {
+            stats = new PlayerStats();
+            stats.setPlayer(player);
+            stats = playerStatsDao.save(stats);
+        }
+        return ResponseEntity.ok(stats);
     }
 
     /**
@@ -44,6 +66,12 @@ public class PlayerController {
     @GetMapping("/{id}/equipment")
     public ResponseEntity<PlayerEquipment> getPlayerEquipment(@PathVariable Long id) {
         Player player = playerDao.findById(id).orElseThrow();
-        return ResponseEntity.ok(player.getEquipment());
+        PlayerEquipment equipment = player.getEquipment();
+        if (equipment == null) {
+            equipment = new PlayerEquipment();
+            equipment.setPlayer(player);
+            equipment = playerEquipmentDao.save(equipment);
+        }
+        return ResponseEntity.ok(equipment);
     }
 }

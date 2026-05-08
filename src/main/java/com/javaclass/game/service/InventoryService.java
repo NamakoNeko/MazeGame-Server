@@ -3,7 +3,6 @@ package com.javaclass.game.service;
 import com.javaclass.game.constants.InventoryDefiner;
 import com.javaclass.game.dao.InventoryDao;
 import com.javaclass.game.dao.ItemDao;
-import com.javaclass.game.dao.PlayerDao;
 import com.javaclass.game.dto.GrantItemRequest;
 import com.javaclass.game.dto.InventoryItemResult;
 import com.javaclass.game.dto.RemoveItemRequest;
@@ -21,26 +20,15 @@ import java.util.List;
 public class InventoryService {
 
     private final InventoryDao inventoryDao;
-    private final PlayerDao playerDao;
     private final ItemDao itemDao;
 
-    public InventoryService(
-        InventoryDao inventoryDao,
-        PlayerDao playerDao,
-        ItemDao itemDao
-    ) {
+    public InventoryService(InventoryDao inventoryDao, ItemDao itemDao) {
         this.inventoryDao = inventoryDao;
-        this.playerDao = playerDao;
         this.itemDao = itemDao;
     }
 
-    public Page<InventoryItemResult> getInventory(String accountId, Pageable pageable) {
-        boolean isPlayerExists = playerDao.findByAccountId(accountId).isPresent();
-        if (!isPlayerExists) {
-            throw new IllegalArgumentException(InventoryDefiner.ERROR_PLAYER_NOT_FOUND);
-        }
-
-        Page<Inventory> inventoryPage = inventoryDao.findByAccountId(accountId, pageable);
+    public Page<InventoryItemResult> getInventory(Long playerId, Pageable pageable) {
+        Page<Inventory> inventoryPage = inventoryDao.findByPlayerId(playerId, pageable);
 
         List<InventoryItemResult> inventoryItemResultList = inventoryPage.getContent().stream()
             .map(inventory -> {
@@ -62,22 +50,17 @@ public class InventoryService {
     }
 
     @Transactional
-    public void grantItem(String accountId, GrantItemRequest grantItemRequest) {
-        boolean isPlayerExists = playerDao.findByAccountId(accountId).isPresent();
-        if (!isPlayerExists) {
-            throw new IllegalArgumentException(InventoryDefiner.ERROR_PLAYER_NOT_FOUND);
-        }
-
+    public void grantItem(Long playerId, GrantItemRequest grantItemRequest) {
         boolean isItemExists = itemDao.existsById(grantItemRequest.getItemId());
         if (!isItemExists) {
             throw new IllegalArgumentException(InventoryDefiner.ERROR_ITEM_NOT_FOUND);
         }
 
         Inventory inventory = inventoryDao
-            .findByAccountIdAndItemId(accountId, grantItemRequest.getItemId())
+            .findByPlayerIdAndItemId(playerId, grantItemRequest.getItemId())
             .orElseGet(() -> {
                 Inventory newInventory = new Inventory();
-                newInventory.setAccountId(accountId);
+                newInventory.setPlayerId(playerId);
                 newInventory.setItemId(grantItemRequest.getItemId());
                 newInventory.setQuantity(0);
                 return newInventory;
@@ -88,14 +71,9 @@ public class InventoryService {
     }
 
     @Transactional
-    public void removeItem(String accountId, RemoveItemRequest removeItemRequest) {
-        boolean isPlayerExists = playerDao.findByAccountId(accountId).isPresent();
-        if (!isPlayerExists) {
-            throw new IllegalArgumentException(InventoryDefiner.ERROR_PLAYER_NOT_FOUND);
-        }
-
+    public void removeItem(Long playerId, RemoveItemRequest removeItemRequest) {
         Inventory inventory = inventoryDao
-            .findByAccountIdAndItemId(accountId, removeItemRequest.getItemId())
+            .findByPlayerIdAndItemId(playerId, removeItemRequest.getItemId())
             .orElseThrow(() -> new IllegalArgumentException(InventoryDefiner.ERROR_ITEM_NOT_FOUND));
 
         boolean isQuantityEnough = inventory.getQuantity() >= removeItemRequest.getQuantity();

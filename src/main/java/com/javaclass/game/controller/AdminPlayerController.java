@@ -57,12 +57,6 @@ public class AdminPlayerController {
                 .body(ApiResponse.failure(400, PlayerDefiner.ERROR_NICKNAME_REQUIRED));
         }
 
-        if (updatePlayerRequest.getLevel() != null && updatePlayerRequest.getLevel() <= 0) {
-            return ResponseEntity
-                .badRequest()
-                .body(ApiResponse.failure(400, PlayerDefiner.ERROR_LEVEL_INVALID));
-        }
-
         try {
             playerService.updatePlayer(id, updatePlayerRequest);
             return ResponseEntity.ok(ApiResponse.success(null));

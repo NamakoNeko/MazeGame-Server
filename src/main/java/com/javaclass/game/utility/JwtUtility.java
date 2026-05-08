@@ -42,9 +42,9 @@ public class JwtUtility {
             .compact();
     }
 
-    public String generatePlayerToken(String accountId) {
+    public String generatePlayerToken(Long playerId) {
         return Jwts.builder()
-            .claim("account_id", accountId)
+            .claim("player_id", playerId)
             .setIssuedAt(new Date())
             .setExpiration(buildExpirationTime())
             .signWith(getSigningKey(), SignatureAlgorithm.HS256)
@@ -75,9 +75,9 @@ public class JwtUtility {
         return claims.get("role", String.class);
     }
 
-    public String extractPlayerAccountId(String token) {
+    public Long extractPlayerId(String token) {
         Claims claims = parseToken(token);
-        return claims.get("account_id", String.class);
+        return claims.get("player_id", Long.class);
     }
 
     public boolean isTokenExpired(String token) {

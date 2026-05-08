@@ -8,6 +8,9 @@ import com.javaclass.game.dto.GainPlayerItemResponse;
 import com.javaclass.game.dto.MovePlayerItemRequest;
 import com.javaclass.game.dto.MovePlayerItemResponse;
 import com.javaclass.game.dto.PlayerItemResult;
+import com.javaclass.game.dto.ReplaceLocationItemsRequest;
+import com.javaclass.game.dto.SellPlayerItemRequest;
+import com.javaclass.game.dto.SellPlayerItemResponse;
 import com.javaclass.game.service.PlayerItemService;
 import com.javaclass.game.utility.ApiResponse;
 import com.javaclass.game.utility.JwtUtility;
@@ -32,9 +35,9 @@ public class PlayerItemController {
     public ResponseEntity<ApiResponse<?>> getPlayerItems(
         @RequestHeader("Authorization") String authorizationHeader
     ) {
-        String accountId = jwtUtility.extractPlayerAccountId(jwtUtility.extractToken(authorizationHeader));
+        Long playerId = jwtUtility.extractPlayerId(jwtUtility.extractToken(authorizationHeader));
         try {
-            List<PlayerItemResult> playerItemsList = playerItemsService.getPlayerItemsByAccountId(accountId);
+            List<PlayerItemResult> playerItemsList = playerItemsService.getPlayerItems(playerId);
             return ResponseEntity.ok(ApiResponse.success(playerItemsList));
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity
@@ -55,8 +58,8 @@ public class PlayerItemController {
         }
 
         try {
-            String accountId = jwtUtility.extractPlayerAccountId(jwtUtility.extractToken(authorizationHeader));
-            GainPlayerItemResponse response = playerItemsService.gainItems(accountId, gainPlayerItemRequest);
+            Long playerId = jwtUtility.extractPlayerId(jwtUtility.extractToken(authorizationHeader));
+            GainPlayerItemResponse response = playerItemsService.gainItems(playerId, gainPlayerItemRequest);
             return ResponseEntity.ok(ApiResponse.success(response));
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity
@@ -77,8 +80,8 @@ public class PlayerItemController {
         }
 
         try {
-            String accountId = jwtUtility.extractPlayerAccountId(jwtUtility.extractToken(authorizationHeader));
-            ConsumePlayerItemResponse response = playerItemsService.consumeItems(accountId, consumePlayerItemRequest);
+            Long playerId = jwtUtility.extractPlayerId(jwtUtility.extractToken(authorizationHeader));
+            ConsumePlayerItemResponse response = playerItemsService.consumeItems(playerId, consumePlayerItemRequest);
             return ResponseEntity.ok(ApiResponse.success(response));
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity
@@ -117,9 +120,64 @@ public class PlayerItemController {
         }
 
         try {
-            String accountId = jwtUtility.extractPlayerAccountId(jwtUtility.extractToken(authorizationHeader));
-            MovePlayerItemResponse response = playerItemsService.moveItem(accountId, movePlayerItemRequest);
+            Long playerId = jwtUtility.extractPlayerId(jwtUtility.extractToken(authorizationHeader));
+            MovePlayerItemResponse response = playerItemsService.moveItem(playerId, movePlayerItemRequest);
             return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (IllegalArgumentException illegalArgumentException) {
+            return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.failure(400, illegalArgumentException.getMessage()));
+        }
+    }
+
+    @PostMapping(PlayerItemDefiner.SELL_PATH)
+    public ResponseEntity<ApiResponse<?>> sellItem(
+        @RequestHeader("Authorization") String authorizationHeader,
+        @RequestBody SellPlayerItemRequest sellPlayerItemRequest
+    ) {
+        if (sellPlayerItemRequest.getPlayerItemId() == null && sellPlayerItemRequest.getItemId() == null) {
+            return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.failure(400, PlayerItemDefiner.ERROR_ITEM_ID_REQUIRED));
+        }
+
+        try {
+            Long playerId = jwtUtility.extractPlayerId(jwtUtility.extractToken(authorizationHeader));
+            SellPlayerItemResponse response = playerItemsService.sellItem(playerId, sellPlayerItemRequest);
+            return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (IllegalArgumentException illegalArgumentException) {
+            return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.failure(400, illegalArgumentException.getMessage()));
+        }
+    }
+
+    @DeleteMapping(PlayerItemDefiner.CLEAR_LOCATION_PATH)
+    public ResponseEntity<ApiResponse<?>> clearLocation(
+        @RequestHeader("Authorization") String authorizationHeader,
+        @PathVariable Integer location
+    ) {
+        try {
+            Long playerId = jwtUtility.extractPlayerId(jwtUtility.extractToken(authorizationHeader));
+            playerItemsService.clearLocation(playerId, location);
+            return ResponseEntity.ok(ApiResponse.success(null));
+        } catch (IllegalArgumentException illegalArgumentException) {
+            return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.failure(400, illegalArgumentException.getMessage()));
+        }
+    }
+
+    @PostMapping(PlayerItemDefiner.REPLACE_LOCATION_PATH)
+    public ResponseEntity<ApiResponse<?>> replaceLocation(
+        @RequestHeader("Authorization") String authorizationHeader,
+        @PathVariable Integer location,
+        @RequestBody ReplaceLocationItemsRequest request
+    ) {
+        try {
+            Long playerId = jwtUtility.extractPlayerId(jwtUtility.extractToken(authorizationHeader));
+            playerItemsService.replaceLocation(playerId, location, request);
+            return ResponseEntity.ok(ApiResponse.success(null));
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity
                 .badRequest()

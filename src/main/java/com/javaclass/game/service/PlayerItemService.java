@@ -1,9 +1,11 @@
 package com.javaclass.game.service;
 
 import com.javaclass.game.constants.PlayerItemDefiner;
+import com.javaclass.game.dao.GameItemAttributeDao;
 import com.javaclass.game.dao.ItemDao;
-import com.javaclass.game.dao.PlayerDao;
+import com.javaclass.game.dao.ItemPriceDao;
 import com.javaclass.game.dao.PlayerItemDao;
+import com.javaclass.game.dao.PlayerStatsDao;
 import com.javaclass.game.dto.ConsumePlayerItemRequest;
 import com.javaclass.game.dto.ConsumePlayerItemResponse;
 import com.javaclass.game.dto.GainPlayerItemRequest;
@@ -11,8 +13,15 @@ import com.javaclass.game.dto.GainPlayerItemResponse;
 import com.javaclass.game.dto.MovePlayerItemRequest;
 import com.javaclass.game.dto.MovePlayerItemResponse;
 import com.javaclass.game.dto.PlayerItemResult;
+import com.javaclass.game.dto.ItemAttributeResult;
+import com.javaclass.game.dto.ReplaceLocationItemsRequest;
+import com.javaclass.game.dto.SellPlayerItemRequest;
+import com.javaclass.game.dto.SellPlayerItemResponse;
 import com.javaclass.game.model.Item;
+import com.javaclass.game.model.ItemPrice;
+import com.javaclass.game.model.GameItemAttribute;
 import com.javaclass.game.model.PlayerItem;
+import com.javaclass.game.model.PlayerStats;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,52 +34,40 @@ public class PlayerItemService {
 
     private final PlayerItemDao playerItemDao;
     private final ItemDao itemDao;
-    private final PlayerDao playerDao;
+    private final ItemPriceDao itemPriceDao;
+    private final PlayerStatsDao playerStatsDao;
+    private final GameItemAttributeDao gameItemAttributeDao;
 
     public PlayerItemService(
         PlayerItemDao playerItemDao,
         ItemDao itemDao,
-        PlayerDao playerDao
+        ItemPriceDao itemPriceDao,
+        PlayerStatsDao playerStatsDao,
+        GameItemAttributeDao gameItemAttributeDao
     ) {
         this.playerItemDao = playerItemDao;
         this.itemDao = itemDao;
-        this.playerDao = playerDao;
+        this.itemPriceDao = itemPriceDao;
+        this.playerStatsDao = playerStatsDao;
+        this.gameItemAttributeDao = gameItemAttributeDao;
     }
 
-    public List<PlayerItemResult> getPlayerItemsByAccountId(String accountId) {
-        boolean isPlayerExists = playerDao.findByAccountId(accountId).isPresent();
-        if (!isPlayerExists) {
-            throw new IllegalArgumentException(PlayerItemDefiner.ERROR_PLAYER_NOT_FOUND);
-        }
+    public List<PlayerItemResult> getPlayerItems(Long playerId) {
+        
 
-        return playerItemDao.findByAccountId(accountId).stream()
+        return playerItemDao.findByPlayerId(playerId).stream()
             .filter(record -> record.getAmount() > 0)
             .map((PlayerItem record) -> {
                 Item item = itemDao.findById(record.getItemId()).orElse(null);
 
-                return PlayerItemResult.builder()
-                    .playerItemId(record.getId())
-                    .itemId(record.getItemId())
-                    .name(item != null ? item.getName() : "")
-                    .description(item != null ? item.getDescription() : "")
-                    .effect(item != null ? item.getEffect() : "")
-                    .rare(item != null ? item.getRare() : "")
-                    .type(item != null ? item.getType() : null)
-                    .maxAmount(item != null ? item.getMaxAmount() : null)
-                    .location(record.getLocation())
-                    .position(record.getPosition())
-                    .amount(record.getAmount())
-                    .build();
+                return toPlayerItemResult(record, item);
             })
             .toList();
     }
 
     @Transactional
-    public GainPlayerItemResponse gainItems(String accountId, GainPlayerItemRequest gainPlayerItemRequest) {
-        boolean isPlayerExists = playerDao.findByAccountId(accountId).isPresent();
-        if (!isPlayerExists) {
-            throw new IllegalArgumentException(PlayerItemDefiner.ERROR_PLAYER_NOT_FOUND);
-        }
+    public GainPlayerItemResponse gainItems(Long playerId, GainPlayerItemRequest gainPlayerItemRequest) {
+        
 
         List<GainPlayerItemRequest.GainPlayerItemEntry> entryList = gainPlayerItemRequest.getItems();
 
@@ -80,7 +77,7 @@ public class PlayerItemService {
                 .orElseThrow(() -> new IllegalArgumentException(PlayerItemDefiner.ERROR_ITEM_NOT_FOUND));
 
             Optional<PlayerItem> existingPlayerItem = playerItemDao
-                .findByAccountIdAndLocationAndPosition(accountId, entry.getLocation(), entry.getPosition());
+                .findByPlayerIdAndLocationAndPosition(playerId, entry.getLocation(), entry.getPosition());
 
             if (existingPlayerItem.isPresent() && existingPlayerItem.get().getAmount() > 0) {
                 int newAmount = existingPlayerItem.get().getAmount() + entry.getAmount();
@@ -96,7 +93,7 @@ public class PlayerItemService {
 
         for (GainPlayerItemRequest.GainPlayerItemEntry entry : entryList) {
             Optional<PlayerItem> existingPlayerItem = playerItemDao
-                .findByAccountIdAndLocationAndPosition(accountId, entry.getLocation(), entry.getPosition());
+                .findByPlayerIdAndLocationAndPosition(playerId, entry.getLocation(), entry.getPosition());
 
             if (existingPlayerItem.isPresent()) {
                 PlayerItem playerItem = existingPlayerItem.get();
@@ -118,7 +115,7 @@ public class PlayerItemService {
                     .build());
             } else {
                 PlayerItem newPlayerItem = new PlayerItem();
-                newPlayerItem.setAccountId(accountId);
+                newPlayerItem.setPlayerId(playerId);
                 newPlayerItem.setItemId(entry.getItemId());
                 newPlayerItem.setLocation(entry.getLocation());
                 newPlayerItem.setPosition(entry.getPosition());
@@ -138,18 +135,15 @@ public class PlayerItemService {
     }
 
     @Transactional
-    public ConsumePlayerItemResponse consumeItems(String accountId, ConsumePlayerItemRequest consumePlayerItemRequest) {
-        boolean isPlayerExists = playerDao.findByAccountId(accountId).isPresent();
-        if (!isPlayerExists) {
-            throw new IllegalArgumentException(PlayerItemDefiner.ERROR_PLAYER_NOT_FOUND);
-        }
+    public ConsumePlayerItemResponse consumeItems(Long playerId, ConsumePlayerItemRequest consumePlayerItemRequest) {
+        
 
         List<ConsumePlayerItemRequest.ConsumePlayerItemEntry> entryList = consumePlayerItemRequest.getItems();
 
         // ── 第一階段：全部驗證 ──
         for (ConsumePlayerItemRequest.ConsumePlayerItemEntry entry : entryList) {
             PlayerItem playerItem = playerItemDao
-                .findByAccountIdAndLocationAndPosition(accountId, entry.getLocation(), entry.getPosition())
+                .findByPlayerIdAndLocationAndPosition(playerId, entry.getLocation(), entry.getPosition())
                 .orElseThrow(() -> new IllegalArgumentException(PlayerItemDefiner.ERROR_ITEM_NOT_FOUND));
 
             boolean isAmountEnough = playerItem.getAmount() >= entry.getAmount();
@@ -163,7 +157,7 @@ public class PlayerItemService {
 
         for (ConsumePlayerItemRequest.ConsumePlayerItemEntry entry : entryList) {
             PlayerItem playerItem = playerItemDao
-                .findByAccountIdAndLocationAndPosition(accountId, entry.getLocation(), entry.getPosition())
+                .findByPlayerIdAndLocationAndPosition(playerId, entry.getLocation(), entry.getPosition())
                 .orElseThrow();
 
             playerItem.setAmount(playerItem.getAmount() - entry.getAmount());
@@ -185,15 +179,12 @@ public class PlayerItemService {
     }
 
     @Transactional
-    public MovePlayerItemResponse moveItem(String accountId, MovePlayerItemRequest movePlayerItemRequest) {
-        boolean isPlayerExists = playerDao.findByAccountId(accountId).isPresent();
-        if (!isPlayerExists) {
-            throw new IllegalArgumentException(PlayerItemDefiner.ERROR_PLAYER_NOT_FOUND);
-        }
+    public MovePlayerItemResponse moveItem(Long playerId, MovePlayerItemRequest movePlayerItemRequest) {
+        
 
         PlayerItem sourcePlayerItem = playerItemDao
-            .findByAccountIdAndLocationAndPosition(
-                accountId,
+            .findByPlayerIdAndLocationAndPosition(
+                playerId,
                 movePlayerItemRequest.getBeforeLocation(),
                 movePlayerItemRequest.getBeforePosition()
             )
@@ -205,8 +196,8 @@ public class PlayerItemService {
         }
 
         Optional<PlayerItem> targetPlayerItem = playerItemDao
-            .findByAccountIdAndLocationAndPosition(
-                accountId,
+            .findByPlayerIdAndLocationAndPosition(
+                playerId,
                 movePlayerItemRequest.getAfterLocation(),
                 movePlayerItemRequest.getAfterPosition()
             );
@@ -233,7 +224,7 @@ public class PlayerItemService {
             playerItemDao.save(target);
         } else {
             PlayerItem newPlayerItem = new PlayerItem();
-            newPlayerItem.setAccountId(accountId);
+            newPlayerItem.setPlayerId(playerId);
             newPlayerItem.setItemId(sourcePlayerItem.getItemId());
             newPlayerItem.setLocation(movePlayerItemRequest.getAfterLocation());
             newPlayerItem.setPosition(movePlayerItemRequest.getAfterPosition());
@@ -255,6 +246,149 @@ public class PlayerItemService {
             .beforePosition(movePlayerItemRequest.getBeforePosition())
             .afterLocation(movePlayerItemRequest.getAfterLocation())
             .afterPosition(movePlayerItemRequest.getAfterPosition())
+            .build();
+    }
+
+    @Transactional
+    public void clearLocation(Long playerId, Integer location) {
+        if (location == null) {
+            throw new IllegalArgumentException(PlayerItemDefiner.ERROR_LOCATION_REQUIRED);
+        }
+        
+        playerItemDao.deleteByPlayerIdAndLocation(playerId, location);
+    }
+
+    @Transactional
+    public void replaceLocation(Long playerId, Integer location, ReplaceLocationItemsRequest request) {
+        if (location == null) {
+            throw new IllegalArgumentException(PlayerItemDefiner.ERROR_LOCATION_REQUIRED);
+        }
+        
+        playerItemDao.deleteByPlayerIdAndLocation(playerId, location);
+        if (request == null || request.getItems() == null || request.getItems().isEmpty()) {
+            return;
+        }
+
+        for (ReplaceLocationItemsRequest.ReplaceLocationItemEntry entry : request.getItems()) {
+            if (entry.getItemId() == null) {
+                throw new IllegalArgumentException(PlayerItemDefiner.ERROR_ITEM_ID_REQUIRED);
+            }
+            int amount = entry.getAmount() == null ? 1 : entry.getAmount();
+            if (amount <= 0) {
+                throw new IllegalArgumentException(PlayerItemDefiner.ERROR_AMOUNT_INVALID);
+            }
+            if (entry.getPosition() == null || entry.getPosition() < 0) {
+                throw new IllegalArgumentException(PlayerItemDefiner.ERROR_POSITION_REQUIRED);
+            }
+
+            Item item = itemDao.findById(entry.getItemId())
+                .orElseThrow(() -> new IllegalArgumentException(PlayerItemDefiner.ERROR_ITEM_NOT_FOUND));
+            int maxAmount = item.getMaxAmount() == null ? amount : item.getMaxAmount();
+            if (amount > maxAmount) {
+                throw new IllegalArgumentException(PlayerItemDefiner.ERROR_MAX_AMOUNT_EXCEEDED);
+            }
+
+            PlayerItem playerItem = new PlayerItem();
+            playerItem.setPlayerId(playerId);
+            playerItem.setItemId(entry.getItemId());
+            playerItem.setLocation(location);
+            playerItem.setPosition(entry.getPosition());
+            playerItem.setAmount(amount);
+            playerItemDao.save(playerItem);
+        }
+    }
+
+    @Transactional
+    public SellPlayerItemResponse sellItem(Long playerId, SellPlayerItemRequest request) {
+        
+        int amount = request.getAmount() == null ? 1 : request.getAmount();
+        if (amount <= 0) {
+            throw new IllegalArgumentException(PlayerItemDefiner.ERROR_AMOUNT_INVALID);
+        }
+
+        PlayerItem playerItem;
+        if (request.getPlayerItemId() != null) {
+            playerItem = playerItemDao.findById(request.getPlayerItemId())
+                .filter(item -> item.getPlayerId().equals(playerId))
+                .orElseThrow(() -> new IllegalArgumentException(PlayerItemDefiner.ERROR_ITEM_NOT_FOUND));
+        } else {
+            if (request.getItemId() == null) {
+                throw new IllegalArgumentException(PlayerItemDefiner.ERROR_ITEM_ID_REQUIRED);
+            }
+            if (request.getLocation() == null || request.getPosition() == null) {
+                throw new IllegalArgumentException(PlayerItemDefiner.ERROR_POSITION_REQUIRED);
+            }
+            playerItem = playerItemDao.findByPlayerIdAndLocationAndPosition(playerId, request.getLocation(), request.getPosition())
+                .filter(item -> item.getItemId().equals(request.getItemId()))
+                .orElseThrow(() -> new IllegalArgumentException(PlayerItemDefiner.ERROR_ITEM_NOT_FOUND));
+        }
+        if (playerItem.getAmount() < amount) {
+            throw new IllegalArgumentException(PlayerItemDefiner.ERROR_AMOUNT_NOT_ENOUGH);
+        }
+
+        ItemPrice price = itemPriceDao.findById(playerItem.getItemId())
+            .orElseThrow(() -> new IllegalArgumentException("item price not found"));
+        PlayerStats stats = playerStatsDao.findById(playerId)
+            .orElseThrow(() -> new IllegalArgumentException(PlayerItemDefiner.ERROR_PLAYER_NOT_FOUND));
+
+        long gainedMoney = price.getSellPrice() * amount;
+        stats.setMoney((stats.getMoney() == null ? 0L : stats.getMoney()) + gainedMoney);
+        playerStatsDao.save(stats);
+
+        playerItem.setAmount(playerItem.getAmount() - amount);
+        int remaining = playerItem.getAmount();
+        if (remaining <= 0) {
+            playerItemDao.delete(playerItem);
+            remaining = 0;
+        } else {
+            playerItemDao.save(playerItem);
+        }
+
+        return SellPlayerItemResponse.builder()
+            .playerItemId(request.getPlayerItemId())
+            .itemId(playerItem.getItemId())
+            .soldAmount(amount)
+            .remainingAmount(remaining)
+            .gainedMoney(gainedMoney)
+            .money(stats.getMoney())
+            .build();
+    }
+
+
+    public PlayerItemResult toPlayerItemResult(PlayerItem record) {
+        Item item = itemDao.findById(record.getItemId()).orElse(null);
+        return toPlayerItemResult(record, item);
+    }
+
+    private PlayerItemResult toPlayerItemResult(PlayerItem record, Item item) {
+        ItemPrice price = itemPriceDao.findById(record.getItemId()).orElse(null);
+        List<ItemAttributeResult> attributes = gameItemAttributeDao.findByItemId(record.getItemId()).stream()
+            .map(this::toAttributeResult)
+            .toList();
+        return PlayerItemResult.builder()
+            .playerItemId(record.getId())
+            .itemId(record.getItemId())
+            .name(item != null ? item.getName() : "")
+            .description(item != null ? item.getDescription() : "")
+            .effect("")
+            .rare(item != null ? item.getRare() : "")
+            .type(item != null ? item.getType() : null)
+            .modelPath(item != null ? item.getModelPath() : "")
+            .maxAmount(item != null ? item.getMaxAmount() : null)
+            .location(record.getLocation())
+            .position(record.getPosition())
+            .amount(record.getAmount())
+            .buyPrice(price != null ? price.getBuyPrice() : 0L)
+            .sellPrice(price != null ? price.getSellPrice() : 0L)
+            .attributes(attributes)
+            .build();
+    }
+
+    private ItemAttributeResult toAttributeResult(GameItemAttribute attribute) {
+        return ItemAttributeResult.builder()
+            .effectType(attribute.getEffectType())
+            .value(attribute.getValue())
+            .duration(attribute.getDuration())
             .build();
     }
 }

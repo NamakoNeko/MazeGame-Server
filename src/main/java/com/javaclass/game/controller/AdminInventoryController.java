@@ -1,6 +1,7 @@
 package com.javaclass.game.controller;
 
 import com.javaclass.game.constants.InventoryDefiner;
+import com.javaclass.game.dao.PlayerDao;
 import com.javaclass.game.dto.GrantItemRequest;
 import com.javaclass.game.dto.InventoryItemResult;
 import com.javaclass.game.dto.RemoveItemRequest;
@@ -17,9 +18,17 @@ import org.springframework.web.bind.annotation.*;
 public class AdminInventoryController {
 
     private final InventoryService inventoryService;
+    private final PlayerDao playerDao;
 
-    public AdminInventoryController(InventoryService inventoryService) {
+    public AdminInventoryController(InventoryService inventoryService, PlayerDao playerDao) {
         this.inventoryService = inventoryService;
+        this.playerDao = playerDao;
+    }
+
+    private Long resolvePlayerId(String accountId) {
+        return playerDao.findByAccountId(accountId)
+            .orElseThrow(() -> new IllegalArgumentException(InventoryDefiner.ERROR_PLAYER_NOT_FOUND))
+            .getId();
     }
 
     @GetMapping
@@ -28,9 +37,15 @@ public class AdminInventoryController {
         @RequestParam(defaultValue = "" + InventoryDefiner.DEFAULT_PAGE)      int page,
         @RequestParam(defaultValue = "" + InventoryDefiner.DEFAULT_PAGE_SIZE) int size
     ) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<InventoryItemResult> inventoryPage = inventoryService.getInventory(accountId, pageable);
-        return ResponseEntity.ok(ApiResponse.success(inventoryPage));
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<InventoryItemResult> inventoryPage = inventoryService.getInventory(resolvePlayerId(accountId), pageable);
+            return ResponseEntity.ok(ApiResponse.success(inventoryPage));
+        } catch (IllegalArgumentException illegalArgumentException) {
+            return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.failure(400, illegalArgumentException.getMessage()));
+        }
     }
 
     @PostMapping(InventoryDefiner.GRANT_PATH)
@@ -57,7 +72,7 @@ public class AdminInventoryController {
         }
 
         try {
-            inventoryService.grantItem(accountId, grantItemRequest);
+            inventoryService.grantItem(resolvePlayerId(accountId), grantItemRequest);
             return ResponseEntity.ok(ApiResponse.success(null));
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity
@@ -90,7 +105,7 @@ public class AdminInventoryController {
         }
 
         try {
-            inventoryService.removeItem(accountId, removeItemRequest);
+            inventoryService.removeItem(resolvePlayerId(accountId), removeItemRequest);
             return ResponseEntity.ok(ApiResponse.success(null));
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity
