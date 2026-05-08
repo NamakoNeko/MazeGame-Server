@@ -6,6 +6,7 @@ import com.javaclass.game.dto.GrantItemRequest;
 import com.javaclass.game.dto.InventoryItemResult;
 import com.javaclass.game.dto.RemoveItemRequest;
 import com.javaclass.game.service.InventoryService;
+import com.javaclass.game.service.OperationLogService;
 import com.javaclass.game.utility.ApiResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,10 +19,16 @@ import org.springframework.web.bind.annotation.*;
 public class AdminInventoryController {
 
     private final InventoryService inventoryService;
+    private final OperationLogService operationLogService;
     private final PlayerDao playerDao;
 
-    public AdminInventoryController(InventoryService inventoryService, PlayerDao playerDao) {
+    public AdminInventoryController(
+        InventoryService inventoryService,
+        OperationLogService operationLogService,
+        PlayerDao playerDao
+    ) {
         this.inventoryService = inventoryService;
+        this.operationLogService = operationLogService;
         this.playerDao = playerDao;
     }
 
@@ -38,8 +45,9 @@ public class AdminInventoryController {
         @RequestParam(defaultValue = "" + InventoryDefiner.DEFAULT_PAGE_SIZE) int size
     ) {
         try {
+            Long playerId = resolvePlayerId(accountId);
             Pageable pageable = PageRequest.of(page, size);
-            Page<InventoryItemResult> inventoryPage = inventoryService.getInventory(resolvePlayerId(accountId), pageable);
+            Page<InventoryItemResult> inventoryPage = inventoryService.getInventory(playerId, pageable);
             return ResponseEntity.ok(ApiResponse.success(inventoryPage));
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity
@@ -72,7 +80,14 @@ public class AdminInventoryController {
         }
 
         try {
-            inventoryService.grantItem(resolvePlayerId(accountId), grantItemRequest);
+            Long playerId = resolvePlayerId(accountId);
+            inventoryService.grantItem(playerId, grantItemRequest);
+            operationLogService.record(
+                "GRANT_ITEM",
+                "INVENTORY",
+                accountId,
+                "itemId=" + grantItemRequest.getItemId() + ", quantity=" + grantItemRequest.getQuantity()
+            );
             return ResponseEntity.ok(ApiResponse.success(null));
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity
@@ -105,7 +120,14 @@ public class AdminInventoryController {
         }
 
         try {
-            inventoryService.removeItem(resolvePlayerId(accountId), removeItemRequest);
+            Long playerId = resolvePlayerId(accountId);
+            inventoryService.removeItem(playerId, removeItemRequest);
+            operationLogService.record(
+                "REMOVE_ITEM",
+                "INVENTORY",
+                accountId,
+                "itemId=" + removeItemRequest.getItemId() + ", quantity=" + removeItemRequest.getQuantity()
+            );
             return ResponseEntity.ok(ApiResponse.success(null));
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity

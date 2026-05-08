@@ -31,7 +31,14 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(AuthDefiner.LOGIN_URL, AuthDefiner.PLAYER_LOGIN_URL, AuthDefiner.PLAYER_REGISTER_URL).permitAll()
+                .requestMatchers(
+                    "/admin",
+                    "/admin/",
+                    "/admin/**",
+                    AuthDefiner.LOGIN_URL,
+                    AuthDefiner.PLAYER_LOGIN_URL,
+                    AuthDefiner.PLAYER_REGISTER_URL
+                ).permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

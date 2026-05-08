@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>UnnamedGame 後台</title>
+    <link rel="stylesheet" href="/admin/styles.css">
+</head>
+<body>
+    <div class="shell">
+        <aside class="sidebar" aria-label="主選單">
+            <div class="brand">
+                <span class="brand-mark">UG</span>
+                <div>
+                    <strong>UnnamedGame</strong>
+                    <span>Game Operations</span>
+                </div>
+            </div>
+
+            <nav class="nav" id="mainNav">
+                <button class="nav-item is-active" type="button" data-view="players">
+                    <span class="nav-icon">P</span>
+                    <span>玩家管理</span>
+                </button>
+            </nav>
+
+            <div class="session-card">
+                <span class="eyebrow">目前角色</span>
+                <strong id="currentRole">未登入</strong>
+                <span id="tokenExpiry">請先登入後台</span>
+            </div>
+        </aside>
+
+        <main class="main">
+            <section class="login-panel" id="loginPanel" aria-labelledby="loginTitle">
+                <div class="login-copy">
+                    <span class="eyebrow">Admin Console</span>
+                    <h1 id="loginTitle">遊戲後台登入</h1>
+                    <p>管理玩家資料、帳號狀態與玩家背包內容。</p>
+                </div>
+
+                <form class="login-form" id="loginForm">
+                    <label>
+                        <span>帳號</span>
+                        <input id="accountInput" name="account" type="text" autocomplete="username" required>
+                    </label>
+                    <label>
+                        <span>密碼</span>
+                        <input id="passwordInput" name="password" type="password" autocomplete="current-password" required>
+                    </label>
+                    <button class="primary-button" type="submit">登入</button>
+                    <p class="form-message" id="loginMessage" role="status"></p>
+                </form>
+            </section>
+
+            <section class="workspace is-hidden" id="workspace">
+                <header class="topbar">
+                    <div>
+                        <span class="eyebrow">Operations</span>
+                        <h1 id="viewTitle">玩家管理</h1>
+                    </div>
+                    <button class="ghost-button" type="button" id="logoutButton">登出</button>
+                </header>
+
+                <section class="panel" id="playersView">
+                    <div class="panel-header">
+                        <div>
+                            <h2>玩家列表</h2>
+                            <p>搜尋帳號或暱稱，檢視玩家基本狀態。</p>
+                        </div>
+                        <form class="toolbar" id="playerSearchForm">
+                            <input id="playerKeyword" type="search" placeholder="搜尋玩家">
+                            <button class="secondary-button" type="submit">搜尋</button>
+                        </form>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>帳號</th>
+                                    <th>暱稱</th>
+                                    <th>等級</th>
+                                    <th>狀態</th>
+                                    <th>最後登入</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="playerTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <footer class="pager">
+                        <button class="icon-button" type="button" id="prevPage" aria-label="上一頁">‹</button>
+                        <span id="pageInfo">第 1 頁</span>
+                        <button class="icon-button" type="button" id="nextPage" aria-label="下一頁">›</button>
+                    </footer>
+                </section>
+
+                <section class="panel is-hidden" id="inventoryView">
+                    <div class="panel-header">
+                        <div>
+                            <button class="text-button" type="button" id="backToPlayers">← 回玩家列表</button>
+                            <h2 id="inventoryTitle">玩家背包</h2>
+                            <p id="inventorySubtitle">選擇玩家後即可查看背包。</p>
+                        </div>
+                        <form class="toolbar" id="inventoryLookupForm">
+                            <input id="inventoryAccountInput" type="search" placeholder="輸入玩家帳號">
+                            <button class="secondary-button" type="submit">查詢背包</button>
+                        </form>
+                    </div>
+
+                    <div class="split">
+                        <div>
+                            <div class="table-wrap">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>道具 ID</th>
+                                            <th>名稱</th>
+                                            <th>數量</th>
+                                            <th>更新時間</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="inventoryTableBody"></tbody>
+                                </table>
+                            </div>
+                            <footer class="pager">
+                                <button class="icon-button" type="button" id="prevInventoryPage" aria-label="上一頁">‹</button>
+                                <span id="inventoryPageInfo">第 1 頁</span>
+                                <button class="icon-button" type="button" id="nextInventoryPage" aria-label="下一頁">›</button>
+                            </footer>
+                        </div>
+
+                        <div class="action-panel">
+                            <h3>調整背包</h3>
+                            <form id="inventoryActionForm">
+                                <label>
+                                    <span>動作</span>
+                                    <select id="inventoryAction">
+                                        <option value="grant">發放道具</option>
+                                        <option value="remove">扣除道具</option>
+                                    </select>
+                                </label>
+                                <label>
+                                    <span>道具 ID</span>
+                                    <input id="itemIdInput" type="number" min="1" required>
+                                </label>
+                                <label>
+                                    <span>數量</span>
+                                    <input id="quantityInput" type="number" min="1" value="1" required>
+                                </label>
+                                <label>
+                                    <span>原因</span>
+                                    <input id="reasonInput" type="text" placeholder="營運調整">
+                                </label>
+                                <button class="primary-button" type="submit">送出</button>
+                                <p class="form-message" id="inventoryMessage" role="status"></p>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel is-hidden" id="itemsView">
+                    <div class="panel-header">
+                        <div>
+                            <h2>道具管理</h2>
+                            <p>維護道具主檔、稀有度、堆疊上限與基礎屬性。</p>
+                        </div>
+                        <form class="toolbar" id="itemSearchForm">
+                            <input id="itemKeyword" type="search" placeholder="搜尋道具">
+                            <button class="secondary-button" type="submit">搜尋</button>
+                            <button class="primary-button" type="button" id="newItemButton">新增</button>
+                        </form>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>名稱</th>
+                                    <th>類型</th>
+                                    <th>稀有度</th>
+                                    <th>堆疊</th>
+                                    <th>效果</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemTableBody"></tbody>
+                        </table>
+                    </div>
+                    <footer class="pager">
+                        <button class="icon-button" type="button" id="prevItemPage" aria-label="上一頁">‹</button>
+                        <span id="itemPageInfo">第 1 頁</span>
+                        <button class="icon-button" type="button" id="nextItemPage" aria-label="下一頁">›</button>
+                    </footer>
+                </section>
+
+                <section class="panel is-hidden" id="logsView">
+                    <div class="panel-header">
+                        <div>
+                            <h2>操作紀錄</h2>
+                            <p>追蹤後台玩家、背包、道具與帳號管理操作。</p>
+                        </div>
+                        <label class="inline-check">
+                            <input id="includeAllLogs" type="checkbox">
+                            <span>查看全部管理員</span>
+                        </label>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>時間</th>
+                                    <th>管理員</th>
+                                    <th>動作</th>
+                                    <th>目標</th>
+                                    <th>內容</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logTableBody"></tbody>
+                        </table>
+                    </div>
+                    <footer class="pager">
+                        <button class="icon-button" type="button" id="prevLogPage" aria-label="上一頁">‹</button>
+                        <span id="logPageInfo">第 1 頁</span>
+                        <button class="icon-button" type="button" id="nextLogPage" aria-label="下一頁">›</button>
+                    </footer>
+                </section>
+
+                <section class="panel is-hidden" id="accountsView">
+                    <div class="panel-header">
+                        <div>
+                            <h2>帳號管理</h2>
+                            <p>建立後台管理員帳號並指派角色。</p>
+                        </div>
+                        <form class="toolbar" id="accountSearchForm">
+                            <input id="accountKeyword" type="search" placeholder="搜尋帳號或角色">
+                            <button class="secondary-button" type="submit">搜尋</button>
+                            <button class="primary-button" type="button" id="newAccountButton">新增</button>
+                        </form>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>帳號</th>
+                                    <th>角色</th>
+                                    <th>建立時間</th>
+                                </tr>
+                            </thead>
+                            <tbody id="accountTableBody"></tbody>
+                        </table>
+                    </div>
+                    <footer class="pager">
+                        <button class="icon-button" type="button" id="prevAccountPage" aria-label="上一頁">‹</button>
+                        <span id="accountPageInfo">第 1 頁</span>
+                        <button class="icon-button" type="button" id="nextAccountPage" aria-label="下一頁">›</button>
+                    </footer>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <dialog id="playerDialog">
+        <form method="dialog" class="dialog-card" id="playerEditForm">
+            <header>
+                <div>
+                    <span class="eyebrow">Player</span>
+                    <h2 id="dialogTitle">編輯玩家</h2>
+                </div>
+                <button class="icon-button" value="cancel" aria-label="關閉">×</button>
+            </header>
+            <label>
+                <span>暱稱</span>
+                <input id="editNickname" type="text" required>
+            </label>
+            <label>
+                <span>等級</span>
+                <input id="editLevel" type="number" min="1" required>
+            </label>
+            <p class="form-message" id="editMessage" role="status"></p>
+            <footer>
+                <button class="ghost-button" value="cancel">取消</button>
+                <button class="primary-button" id="savePlayerButton" type="submit">儲存</button>
+            </footer>
+        </form>
+    </dialog>
+
+    <dialog id="itemDialog">
+        <form method="dialog" class="dialog-card wide-dialog" id="itemForm">
+            <header>
+                <div>
+                    <span class="eyebrow">Item</span>
+                    <h2 id="itemDialogTitle">新增道具</h2>
+                </div>
+                <button class="icon-button" value="cancel" aria-label="關閉">×</button>
+            </header>
+            <div class="form-grid">
+                <label><span>名稱</span><input id="itemNameInput" type="text" required></label>
+                <label><span>類型</span><input id="itemTypeInput" type="number" min="1" required></label>
+                <label><span>稀有度</span><input id="itemRareInput" type="text" placeholder="COMMON"></label>
+                <label><span>堆疊上限</span><input id="itemMaxAmountInput" type="number" min="1" value="1" required></label>
+                <label><span>HP</span><input id="itemHpInput" type="number"></label>
+                <label><span>ATK</span><input id="itemAtkInput" type="number"></label>
+                <label><span>DEF</span><input id="itemDefInput" type="number"></label>
+                <label><span>持續時間</span><input id="itemDurationInput" type="number" min="0"></label>
+            </div>
+            <label><span>效果</span><input id="itemEffectInput" type="text"></label>
+            <label><span>描述</span><input id="itemDescriptionInput" type="text"></label>
+            <p class="form-message" id="itemMessage" role="status"></p>
+            <footer>
+                <button class="ghost-button" value="cancel">取消</button>
+                <button class="primary-button" type="submit">儲存</button>
+            </footer>
+        </form>
+    </dialog>
+
+    <dialog id="accountDialog">
+        <form method="dialog" class="dialog-card" id="accountForm">
+            <header>
+                <div>
+                    <span class="eyebrow">Account</span>
+                    <h2>新增後台帳號</h2>
+                </div>
+                <button class="icon-button" value="cancel" aria-label="關閉">×</button>
+            </header>
+            <label><span>帳號</span><input id="newAdminAccountInput" type="text" required></label>
+            <label><span>密碼</span><input id="newAdminPasswordInput" type="password" required></label>
+            <label>
+                <span>角色</span>
+                <select id="newAdminRoleInput">
+                    <option value="Operator">Operator</option>
+                    <option value="Admin">Admin</option>
+                    <option value="SuperAdmin">SuperAdmin</option>
+                </select>
+            </label>
+            <p class="form-message" id="accountMessage" role="status"></p>
+            <footer>
+                <button class="ghost-button" value="cancel">取消</button>
+                <button class="primary-button" type="submit">建立</button>
+            </footer>
+        </form>
+    </dialog>
+
+    <template id="emptyRowTemplate">
+        <tr>
+            <td colspan="6" class="empty-state">目前沒有資料</td>
+        </tr>
+    </template>
+
+    <script src="/admin/app.js"></script>
+</body>
+</html>
