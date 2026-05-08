@@ -2,37 +2,8 @@ package com.javaclass.game.constants;
 
 public class PlayerItemDefiner {
 
-    public enum ItemType {
-        HEAD(1),
-        CHEST(2),
-        WEAPON(3),
-        OFF_HAND(4),
-        SHOES(5),
-        CONSUMABLE(6);
-
-        private final int value;
-
-        ItemType(int value) {
-            this.value = value;
-        }
-
-        public int getValue() {
-            return value;
-        }
-
-        public static ItemType fromValue(int value) {
-            for (ItemType itemType : values()) {
-                if (itemType.value == value) {
-                    return itemType;
-                }
-            }
-            throw new IllegalArgumentException("無效的道具類型：" + value);
-        }
-
-        public boolean isEquipment() {
-            return this != CONSUMABLE;
-        }
-    }
+    public static final int ITEM_TYPE_EQUIPMENT  = 1;
+    public static final int ITEM_TYPE_CONSUMABLE = 2;
 
     public static final String STORAGE_BASE_URL  = "/api/game/storage";
     public static final String GAIN_PATH         = "/gain";
@@ -41,10 +12,6 @@ public class PlayerItemDefiner {
     public static final String SELL_PATH         = "/sell";
     public static final String CLEAR_LOCATION_PATH = "/location/{location}";
     public static final String REPLACE_LOCATION_PATH = "/location/{location}/replace";
-
-    public static final String EQUIPMENT_BASE_URL = "/api/game/equipment";
-    public static final String EQUIP_PATH          = "/equip";
-    public static final String UNEQUIP_PATH        = "/unequip";
 
     public static final int LOCATION_INVENTORY   = 1;
     public static final int LOCATION_WAREHOUSE   = 2;
