@@ -9,5 +9,8 @@ import lombok.Setter;
 @NoArgsConstructor
 public class SellPlayerItemRequest {
     private Long playerItemId;
+    private Long itemId;
+    private Integer location;
+    private Integer position;
     private Integer amount;
 }

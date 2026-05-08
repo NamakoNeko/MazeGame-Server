@@ -41,6 +41,7 @@ public class GameItemCatalogService {
             .type(item.getType())
             .rare(item.getRare())
             .maxAmount(item.getMaxAmount())
+            .modelPath(item.getModelPath())
             .buyPrice(price != null ? price.getBuyPrice() : 0L)
             .sellPrice(price != null ? price.getSellPrice() : 0L)
             .attributes(attributes)

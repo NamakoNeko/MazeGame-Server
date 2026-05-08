@@ -14,6 +14,8 @@ public class PlayerItemDefiner {
     public static final String CONSUME_PATH      = "/consume";
     public static final String MOVE_PATH         = "/move";
     public static final String SELL_PATH         = "/sell";
+    public static final String CLEAR_LOCATION_PATH = "/location/{location}";
+    public static final String REPLACE_LOCATION_PATH = "/location/{location}/replace";
 
     public static final int LOCATION_INVENTORY   = 1;
     public static final int LOCATION_WAREHOUSE   = 2;

@@ -8,6 +8,7 @@ import com.javaclass.game.dto.GainPlayerItemResponse;
 import com.javaclass.game.dto.MovePlayerItemRequest;
 import com.javaclass.game.dto.MovePlayerItemResponse;
 import com.javaclass.game.dto.PlayerItemResult;
+import com.javaclass.game.dto.ReplaceLocationItemsRequest;
 import com.javaclass.game.dto.SellPlayerItemRequest;
 import com.javaclass.game.dto.SellPlayerItemResponse;
 import com.javaclass.game.service.PlayerItemService;
@@ -134,7 +135,7 @@ public class PlayerItemController {
         @RequestHeader("Authorization") String authorizationHeader,
         @RequestBody SellPlayerItemRequest sellPlayerItemRequest
     ) {
-        if (sellPlayerItemRequest.getPlayerItemId() == null) {
+        if (sellPlayerItemRequest.getPlayerItemId() == null && sellPlayerItemRequest.getItemId() == null) {
             return ResponseEntity
                 .badRequest()
                 .body(ApiResponse.failure(400, PlayerItemDefiner.ERROR_ITEM_ID_REQUIRED));
@@ -144,6 +145,39 @@ public class PlayerItemController {
             String accountId = jwtUtility.extractPlayerAccountId(jwtUtility.extractToken(authorizationHeader));
             SellPlayerItemResponse response = playerItemsService.sellItem(accountId, sellPlayerItemRequest);
             return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (IllegalArgumentException illegalArgumentException) {
+            return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.failure(400, illegalArgumentException.getMessage()));
+        }
+    }
+
+    @DeleteMapping(PlayerItemDefiner.CLEAR_LOCATION_PATH)
+    public ResponseEntity<ApiResponse<?>> clearLocation(
+        @RequestHeader("Authorization") String authorizationHeader,
+        @PathVariable Integer location
+    ) {
+        try {
+            String accountId = jwtUtility.extractPlayerAccountId(jwtUtility.extractToken(authorizationHeader));
+            playerItemsService.clearLocation(accountId, location);
+            return ResponseEntity.ok(ApiResponse.success(null));
+        } catch (IllegalArgumentException illegalArgumentException) {
+            return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.failure(400, illegalArgumentException.getMessage()));
+        }
+    }
+
+    @PostMapping(PlayerItemDefiner.REPLACE_LOCATION_PATH)
+    public ResponseEntity<ApiResponse<?>> replaceLocation(
+        @RequestHeader("Authorization") String authorizationHeader,
+        @PathVariable Integer location,
+        @RequestBody ReplaceLocationItemsRequest request
+    ) {
+        try {
+            String accountId = jwtUtility.extractPlayerAccountId(jwtUtility.extractToken(authorizationHeader));
+            playerItemsService.replaceLocation(accountId, location, request);
+            return ResponseEntity.ok(ApiResponse.success(null));
         } catch (IllegalArgumentException illegalArgumentException) {
             return ResponseEntity
                 .badRequest()

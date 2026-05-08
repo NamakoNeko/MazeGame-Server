@@ -15,4 +15,6 @@ public interface PlayerItemDao extends JpaRepository<PlayerItem, Long> {
     Optional<PlayerItem> findByPlayerIdAndItemIdAndLocation(Long playerId, Long itemId, Integer location);
 
     Optional<PlayerItem> findByPlayerIdAndLocationAndPosition(Long playerId, Integer location, Integer position);
+
+    void deleteByPlayerIdAndLocation(Long playerId, Integer location);
 }

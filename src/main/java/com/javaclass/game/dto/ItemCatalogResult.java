@@ -14,6 +14,7 @@ public class ItemCatalogResult {
     private Integer type;
     private String rare;
     private Integer maxAmount;
+    private String modelPath;
     private Long buyPrice;
     private Long sellPrice;
     private List<ItemAttributeResult> attributes;

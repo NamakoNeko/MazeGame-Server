@@ -15,6 +15,7 @@ import com.javaclass.game.dto.MovePlayerItemRequest;
 import com.javaclass.game.dto.MovePlayerItemResponse;
 import com.javaclass.game.dto.PlayerItemResult;
 import com.javaclass.game.dto.ItemAttributeResult;
+import com.javaclass.game.dto.ReplaceLocationItemsRequest;
 import com.javaclass.game.dto.SellPlayerItemRequest;
 import com.javaclass.game.dto.SellPlayerItemResponse;
 import com.javaclass.game.model.Item;
@@ -254,6 +255,55 @@ public class PlayerItemService {
     }
 
     @Transactional
+    public void clearLocation(String accountId, Integer location) {
+        if (location == null) {
+            throw new IllegalArgumentException(PlayerItemDefiner.ERROR_LOCATION_REQUIRED);
+        }
+        Player player = getPlayerByAccountId(accountId);
+        playerItemDao.deleteByPlayerIdAndLocation(player.getId(), location);
+    }
+
+    @Transactional
+    public void replaceLocation(String accountId, Integer location, ReplaceLocationItemsRequest request) {
+        if (location == null) {
+            throw new IllegalArgumentException(PlayerItemDefiner.ERROR_LOCATION_REQUIRED);
+        }
+        Player player = getPlayerByAccountId(accountId);
+        playerItemDao.deleteByPlayerIdAndLocation(player.getId(), location);
+        if (request == null || request.getItems() == null || request.getItems().isEmpty()) {
+            return;
+        }
+
+        for (ReplaceLocationItemsRequest.ReplaceLocationItemEntry entry : request.getItems()) {
+            if (entry.getItemId() == null) {
+                throw new IllegalArgumentException(PlayerItemDefiner.ERROR_ITEM_ID_REQUIRED);
+            }
+            int amount = entry.getAmount() == null ? 1 : entry.getAmount();
+            if (amount <= 0) {
+                throw new IllegalArgumentException(PlayerItemDefiner.ERROR_AMOUNT_INVALID);
+            }
+            if (entry.getPosition() == null || entry.getPosition() < 0) {
+                throw new IllegalArgumentException(PlayerItemDefiner.ERROR_POSITION_REQUIRED);
+            }
+
+            Item item = itemDao.findById(entry.getItemId())
+                .orElseThrow(() -> new IllegalArgumentException(PlayerItemDefiner.ERROR_ITEM_NOT_FOUND));
+            int maxAmount = item.getMaxAmount() == null ? amount : item.getMaxAmount();
+            if (amount > maxAmount) {
+                throw new IllegalArgumentException(PlayerItemDefiner.ERROR_MAX_AMOUNT_EXCEEDED);
+            }
+
+            PlayerItem playerItem = new PlayerItem();
+            playerItem.setPlayerId(player.getId());
+            playerItem.setItemId(entry.getItemId());
+            playerItem.setLocation(location);
+            playerItem.setPosition(entry.getPosition());
+            playerItem.setAmount(amount);
+            playerItemDao.save(playerItem);
+        }
+    }
+
+    @Transactional
     public SellPlayerItemResponse sellItem(String accountId, SellPlayerItemRequest request) {
         Player player = getPlayerByAccountId(accountId);
         int amount = request.getAmount() == null ? 1 : request.getAmount();
@@ -261,9 +311,22 @@ public class PlayerItemService {
             throw new IllegalArgumentException(PlayerItemDefiner.ERROR_AMOUNT_INVALID);
         }
 
-        PlayerItem playerItem = playerItemDao.findById(request.getPlayerItemId())
-            .filter(item -> item.getPlayerId().equals(player.getId()))
-            .orElseThrow(() -> new IllegalArgumentException(PlayerItemDefiner.ERROR_ITEM_NOT_FOUND));
+        PlayerItem playerItem;
+        if (request.getPlayerItemId() != null) {
+            playerItem = playerItemDao.findById(request.getPlayerItemId())
+                .filter(item -> item.getPlayerId().equals(player.getId()))
+                .orElseThrow(() -> new IllegalArgumentException(PlayerItemDefiner.ERROR_ITEM_NOT_FOUND));
+        } else {
+            if (request.getItemId() == null) {
+                throw new IllegalArgumentException(PlayerItemDefiner.ERROR_ITEM_ID_REQUIRED);
+            }
+            if (request.getLocation() == null || request.getPosition() == null) {
+                throw new IllegalArgumentException(PlayerItemDefiner.ERROR_POSITION_REQUIRED);
+            }
+            playerItem = playerItemDao.findByPlayerIdAndLocationAndPosition(player.getId(), request.getLocation(), request.getPosition())
+                .filter(item -> item.getItemId().equals(request.getItemId()))
+                .orElseThrow(() -> new IllegalArgumentException(PlayerItemDefiner.ERROR_ITEM_NOT_FOUND));
+        }
         if (playerItem.getAmount() < amount) {
             throw new IllegalArgumentException(PlayerItemDefiner.ERROR_AMOUNT_NOT_ENOUGH);
         }
@@ -319,6 +382,7 @@ public class PlayerItemService {
             .effect("")
             .rare(item != null ? item.getRare() : "")
             .type(item != null ? item.getType() : null)
+            .modelPath(item != null ? item.getModelPath() : "")
             .maxAmount(item != null ? item.getMaxAmount() : null)
             .location(record.getLocation())
             .position(record.getPosition())

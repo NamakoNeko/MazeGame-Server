@@ -16,6 +16,7 @@ public class PlayerItemResult {
     private String effect;
     private String rare;
     private Integer type;
+    private String modelPath;
     private Integer location;
     private Integer position;
     private Integer amount;
