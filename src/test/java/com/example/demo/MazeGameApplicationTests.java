@@ -1,11 +1,11 @@
 package com.example.demo;
 
-import com.javaclass.game.UnnamedGameApplication;
+import com.javaclass.game.MazeGameApplication;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest(
-	classes = UnnamedGameApplication.class,
+	classes = MazeGameApplication.class,
 	properties = {
 		"spring.profiles.active=test",
 		"spring.datasource.url=jdbc:h2:mem:unnamedgame;MODE=MySQL;DB_CLOSE_DELAY=-1",
@@ -18,7 +18,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 		"jwt.secret=0123456789abcdef0123456789abcdef"
 	}
 )
-class UnnamedGameApplicationTests {
+class MazeGameApplicationTests {
 
 	@Test
 	void contextLoads() {

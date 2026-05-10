@@ -10,9 +10,9 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.javaclass</groupId>
-	<artifactId>UnnamedGame</artifactId>
+	<artifactId>MazeGame</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>UnnamedGame</name>
+	<name>MazeGame</name>
 	<description />
 	<url />
 	<licenses>
