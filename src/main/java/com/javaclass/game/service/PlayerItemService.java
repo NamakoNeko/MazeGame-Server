@@ -373,33 +373,21 @@ public class PlayerItemService {
             for (PlayerItem existing : existingLocationItems) {
                 if (equippedIds.contains(existing.getId())) {
                     existing.setLocation(0);
-                    existing.setPosition(-1);
+                    existing.setPosition(toDetachedPosition(existing));
                     playerItemDao.save(existing);
                 } else {
                     playerItemDao.delete(existing);
                 }
             }
+            playerItemDao.flush();
             return;
         }
 
-        for (ReplaceLocationItemsRequest.ReplaceLocationItemEntry entry : request.getItems()) {
-            if (entry.getItemId() == null) {
-                throw new IllegalArgumentException(PlayerItemDefiner.ERROR_ITEM_ID_REQUIRED);
-            }
-            int amount = entry.getAmount() == null ? 1 : entry.getAmount();
-            if (amount <= 0) {
-                throw new IllegalArgumentException(PlayerItemDefiner.ERROR_AMOUNT_INVALID);
-            }
-            if (entry.getPosition() == null || entry.getPosition() < 0) {
-                throw new IllegalArgumentException(PlayerItemDefiner.ERROR_POSITION_REQUIRED);
-            }
+        validateReplaceLocationRequest(request);
+        moveExistingLocationItemsToTemporaryPositions(existingLocationItems);
 
-            Item item = itemDao.findById(entry.getItemId())
-                .orElseThrow(() -> new IllegalArgumentException(PlayerItemDefiner.ERROR_ITEM_NOT_FOUND));
-            int maxAmount = item.getMaxAmount() == null ? amount : item.getMaxAmount();
-            if (amount > maxAmount) {
-                throw new IllegalArgumentException(PlayerItemDefiner.ERROR_MAX_AMOUNT_EXCEEDED);
-            }
+        for (ReplaceLocationItemsRequest.ReplaceLocationItemEntry entry : request.getItems()) {
+            int amount = entry.getAmount() == null ? 1 : entry.getAmount();
 
             PlayerItem playerItem = null;
             if (entry.getPlayerItemId() != null) {
@@ -425,12 +413,53 @@ public class PlayerItemService {
             }
             if (equippedIds.contains(existing.getId())) {
                 existing.setLocation(0);
-                existing.setPosition(-1);
+                existing.setPosition(toDetachedPosition(existing));
                 playerItemDao.save(existing);
             } else {
                 playerItemDao.delete(existing);
             }
         }
+    }
+
+    private void validateReplaceLocationRequest(ReplaceLocationItemsRequest request) {
+        Set<Integer> positions = new HashSet<>();
+        Set<Long> playerItemIds = new HashSet<>();
+
+        for (ReplaceLocationItemsRequest.ReplaceLocationItemEntry entry : request.getItems()) {
+            if (entry.getItemId() == null) {
+                throw new IllegalArgumentException(PlayerItemDefiner.ERROR_ITEM_ID_REQUIRED);
+            }
+            int amount = entry.getAmount() == null ? 1 : entry.getAmount();
+            if (amount <= 0) {
+                throw new IllegalArgumentException(PlayerItemDefiner.ERROR_AMOUNT_INVALID);
+            }
+            if (entry.getPosition() == null || entry.getPosition() < 0 || !positions.add(entry.getPosition())) {
+                throw new IllegalArgumentException(PlayerItemDefiner.ERROR_POSITION_REQUIRED);
+            }
+            if (entry.getPlayerItemId() != null && !playerItemIds.add(entry.getPlayerItemId())) {
+                throw new IllegalArgumentException(PlayerItemDefiner.ERROR_ITEM_NOT_FOUND);
+            }
+
+            Item item = itemDao.findById(entry.getItemId())
+                .orElseThrow(() -> new IllegalArgumentException(PlayerItemDefiner.ERROR_ITEM_NOT_FOUND));
+            int maxAmount = item.getMaxAmount() == null || item.getMaxAmount() <= 0 ? amount : item.getMaxAmount();
+            if (amount > maxAmount) {
+                throw new IllegalArgumentException(PlayerItemDefiner.ERROR_MAX_AMOUNT_EXCEEDED);
+            }
+        }
+    }
+
+    private void moveExistingLocationItemsToTemporaryPositions(List<PlayerItem> existingLocationItems) {
+        int temporaryPosition = -100000;
+        for (PlayerItem existing : existingLocationItems) {
+            existing.setPosition(temporaryPosition--);
+            playerItemDao.save(existing);
+        }
+        playerItemDao.flush();
+    }
+
+    private int toDetachedPosition(PlayerItem playerItem) {
+        return -Math.toIntExact(playerItem.getId());
     }
 
     private Set<Long> getEquippedPlayerItemIds(Long playerId) {
