@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -48,7 +49,7 @@ public class PlayerController {
      * GET /api/player/1/stats
      */
     @GetMapping("/{id}/stats")
-    public ResponseEntity<PlayerStats> getPlayerStats(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> getPlayerStats(@PathVariable Long id) {
         Player player = playerDao.findById(id).orElseThrow();
         PlayerStats stats = player.getStats();
         if (stats == null) {
@@ -56,7 +57,14 @@ public class PlayerController {
             stats.setPlayer(player);
             stats = playerStatsDao.save(stats);
         }
-        return ResponseEntity.ok(stats);
+        Map<String, Object> result = new HashMap<>();
+        result.put("playerId", stats.getPlayerId());
+        result.put("hp", stats.getHp());
+        result.put("maxHp", stats.getHp());
+        result.put("atk", stats.getAtk());
+        result.put("def", stats.getDef());
+        result.put("money", stats.getMoney());
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -64,7 +72,7 @@ public class PlayerController {
      * GET /api/player/1/equipment
      */
     @GetMapping("/{id}/equipment")
-    public ResponseEntity<PlayerEquipment> getPlayerEquipment(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> getPlayerEquipment(@PathVariable Long id) {
         Player player = playerDao.findById(id).orElseThrow();
         PlayerEquipment equipment = player.getEquipment();
         if (equipment == null) {
@@ -72,6 +80,15 @@ public class PlayerController {
             equipment.setPlayer(player);
             equipment = playerEquipmentDao.save(equipment);
         }
-        return ResponseEntity.ok(equipment);
+        Map<String, Object> result = new HashMap<>();
+        result.put("playerId", equipment.getPlayerId());
+        result.put("headId", equipment.getHeadId());
+        result.put("chestId", equipment.getChestId());
+        result.put("rightHand", equipment.getWeaponId());
+        result.put("weaponId", equipment.getWeaponId());
+        result.put("leftHand", equipment.getOffHandId());
+        result.put("offHandId", equipment.getOffHandId());
+        result.put("shoesId", equipment.getShoesId());
+        return ResponseEntity.ok(result);
     }
 }

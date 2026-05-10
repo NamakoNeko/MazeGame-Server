@@ -9,6 +9,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class MovePlayerItemRequest {
 
+    private Long playerItemId;
     private Long itemId;
     private Integer amount;
     private Integer beforeLocation;

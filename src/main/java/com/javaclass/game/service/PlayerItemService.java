@@ -4,6 +4,7 @@ import com.javaclass.game.constants.PlayerItemDefiner;
 import com.javaclass.game.dao.GameItemAttributeDao;
 import com.javaclass.game.dao.ItemDao;
 import com.javaclass.game.dao.ItemPriceDao;
+import com.javaclass.game.dao.PlayerEquipmentDao;
 import com.javaclass.game.dao.PlayerItemDao;
 import com.javaclass.game.dao.PlayerStatsDao;
 import com.javaclass.game.dto.ConsumePlayerItemRequest;
@@ -20,14 +21,17 @@ import com.javaclass.game.dto.SellPlayerItemResponse;
 import com.javaclass.game.model.Item;
 import com.javaclass.game.model.ItemPrice;
 import com.javaclass.game.model.GameItemAttribute;
+import com.javaclass.game.model.PlayerEquipment;
 import com.javaclass.game.model.PlayerItem;
 import com.javaclass.game.model.PlayerStats;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class PlayerItemService {
@@ -37,19 +41,22 @@ public class PlayerItemService {
     private final ItemPriceDao itemPriceDao;
     private final PlayerStatsDao playerStatsDao;
     private final GameItemAttributeDao gameItemAttributeDao;
+    private final PlayerEquipmentDao playerEquipmentDao;
 
     public PlayerItemService(
         PlayerItemDao playerItemDao,
         ItemDao itemDao,
         ItemPriceDao itemPriceDao,
         PlayerStatsDao playerStatsDao,
-        GameItemAttributeDao gameItemAttributeDao
+        GameItemAttributeDao gameItemAttributeDao,
+        PlayerEquipmentDao playerEquipmentDao
     ) {
         this.playerItemDao = playerItemDao;
         this.itemDao = itemDao;
         this.itemPriceDao = itemPriceDao;
         this.playerStatsDao = playerStatsDao;
         this.gameItemAttributeDao = gameItemAttributeDao;
+        this.playerEquipmentDao = playerEquipmentDao;
     }
 
     public List<PlayerItemResult> getPlayerItems(Long playerId) {
@@ -182,18 +189,27 @@ public class PlayerItemService {
     public MovePlayerItemResponse moveItem(Long playerId, MovePlayerItemRequest movePlayerItemRequest) {
         
 
-        PlayerItem sourcePlayerItem = playerItemDao
-            .findByPlayerIdAndLocationAndPosition(
-                playerId,
-                movePlayerItemRequest.getBeforeLocation(),
-                movePlayerItemRequest.getBeforePosition()
-            )
-            .orElseThrow(() -> new IllegalArgumentException(PlayerItemDefiner.ERROR_ITEM_NOT_FOUND));
+        PlayerItem sourcePlayerItem;
+        if (movePlayerItemRequest.getPlayerItemId() != null) {
+            sourcePlayerItem = playerItemDao.findById(movePlayerItemRequest.getPlayerItemId())
+                .filter(item -> item.getPlayerId().equals(playerId))
+                .orElseThrow(() -> new IllegalArgumentException(PlayerItemDefiner.ERROR_ITEM_NOT_FOUND));
+        } else {
+            sourcePlayerItem = playerItemDao
+                .findByPlayerIdAndLocationAndPosition(
+                    playerId,
+                    movePlayerItemRequest.getBeforeLocation(),
+                    movePlayerItemRequest.getBeforePosition()
+                )
+                .orElseThrow(() -> new IllegalArgumentException(PlayerItemDefiner.ERROR_ITEM_NOT_FOUND));
+        }
 
         boolean isAmountEnough = sourcePlayerItem.getAmount() >= movePlayerItemRequest.getAmount();
         if (!isAmountEnough) {
             throw new IllegalArgumentException(PlayerItemDefiner.ERROR_AMOUNT_NOT_ENOUGH);
         }
+
+        boolean isMovingWholeStack = sourcePlayerItem.getAmount().equals(movePlayerItemRequest.getAmount());
 
         Optional<PlayerItem> targetPlayerItem = playerItemDao
             .findByPlayerIdAndLocationAndPosition(
@@ -205,31 +221,115 @@ public class PlayerItemService {
         if (targetPlayerItem.isPresent()) {
             PlayerItem target = targetPlayerItem.get();
 
+            if (target.getId().equals(sourcePlayerItem.getId())) {
+                return MovePlayerItemResponse.builder()
+                    .itemId(sourcePlayerItem.getItemId())
+                    .amount(movePlayerItemRequest.getAmount())
+                    .beforeLocation(movePlayerItemRequest.getBeforeLocation())
+                    .beforePosition(movePlayerItemRequest.getBeforePosition())
+                    .afterLocation(movePlayerItemRequest.getAfterLocation())
+                    .afterPosition(movePlayerItemRequest.getAfterPosition())
+                    .build();
+            }
+
             boolean isEmptySlot = target.getAmount() == 0;
             if (isEmptySlot) {
-                target.setItemId(sourcePlayerItem.getItemId());
-                target.setAmount(movePlayerItemRequest.getAmount());
+                if (isMovingWholeStack) {
+                    playerItemDao.delete(target);
+                    sourcePlayerItem.setLocation(movePlayerItemRequest.getAfterLocation());
+                    sourcePlayerItem.setPosition(movePlayerItemRequest.getAfterPosition());
+                    playerItemDao.save(sourcePlayerItem);
+
+                    return MovePlayerItemResponse.builder()
+                        .itemId(sourcePlayerItem.getItemId())
+                        .amount(movePlayerItemRequest.getAmount())
+                        .beforeLocation(movePlayerItemRequest.getBeforeLocation())
+                        .beforePosition(movePlayerItemRequest.getBeforePosition())
+                        .afterLocation(movePlayerItemRequest.getAfterLocation())
+                        .afterPosition(movePlayerItemRequest.getAfterPosition())
+                        .build();
+                } else {
+                    target.setItemId(sourcePlayerItem.getItemId());
+                    target.setAmount(movePlayerItemRequest.getAmount());
+                }
+            } else if (!target.getItemId().equals(sourcePlayerItem.getItemId())) {
+                if (!isMovingWholeStack) {
+                    throw new IllegalArgumentException("target slot occupied");
+                }
+
+                Integer sourceLocation = sourcePlayerItem.getLocation();
+                Integer sourcePosition = sourcePlayerItem.getPosition();
+                sourcePlayerItem.setLocation(target.getLocation());
+                sourcePlayerItem.setPosition(target.getPosition());
+                target.setLocation(sourceLocation);
+                target.setPosition(sourcePosition);
+                playerItemDao.save(target);
+                playerItemDao.save(sourcePlayerItem);
+
+                return MovePlayerItemResponse.builder()
+                    .itemId(sourcePlayerItem.getItemId())
+                    .amount(movePlayerItemRequest.getAmount())
+                    .beforeLocation(movePlayerItemRequest.getBeforeLocation())
+                    .beforePosition(movePlayerItemRequest.getBeforePosition())
+                    .afterLocation(movePlayerItemRequest.getAfterLocation())
+                    .afterPosition(movePlayerItemRequest.getAfterPosition())
+                    .build();
             } else {
                 Item item = itemDao.findById(sourcePlayerItem.getItemId())
                     .orElseThrow(() -> new IllegalArgumentException(PlayerItemDefiner.ERROR_ITEM_NOT_FOUND));
 
                 int newAmount = target.getAmount() + movePlayerItemRequest.getAmount();
-                boolean isExceedMaxAmount = newAmount > item.getMaxAmount();
+                int maxAmount = item.getMaxAmount() == null || item.getMaxAmount() <= 0
+                    ? newAmount
+                    : item.getMaxAmount();
+                boolean isExceedMaxAmount = newAmount > maxAmount;
                 if (isExceedMaxAmount) {
                     throw new IllegalArgumentException(PlayerItemDefiner.ERROR_MAX_AMOUNT_EXCEEDED);
                 }
 
-                target.setAmount(newAmount);
+                if (isMovingWholeStack) {
+                    sourcePlayerItem.setLocation(target.getLocation());
+                    sourcePlayerItem.setPosition(target.getPosition());
+                    sourcePlayerItem.setAmount(newAmount);
+                    playerItemDao.delete(target);
+                    playerItemDao.save(sourcePlayerItem);
+
+                    return MovePlayerItemResponse.builder()
+                        .itemId(sourcePlayerItem.getItemId())
+                        .amount(movePlayerItemRequest.getAmount())
+                        .beforeLocation(movePlayerItemRequest.getBeforeLocation())
+                        .beforePosition(movePlayerItemRequest.getBeforePosition())
+                        .afterLocation(movePlayerItemRequest.getAfterLocation())
+                        .afterPosition(movePlayerItemRequest.getAfterPosition())
+                        .build();
+                } else {
+                    target.setAmount(newAmount);
+                }
             }
             playerItemDao.save(target);
         } else {
-            PlayerItem newPlayerItem = new PlayerItem();
-            newPlayerItem.setPlayerId(playerId);
-            newPlayerItem.setItemId(sourcePlayerItem.getItemId());
-            newPlayerItem.setLocation(movePlayerItemRequest.getAfterLocation());
-            newPlayerItem.setPosition(movePlayerItemRequest.getAfterPosition());
-            newPlayerItem.setAmount(movePlayerItemRequest.getAmount());
-            playerItemDao.save(newPlayerItem);
+            if (isMovingWholeStack) {
+                sourcePlayerItem.setLocation(movePlayerItemRequest.getAfterLocation());
+                sourcePlayerItem.setPosition(movePlayerItemRequest.getAfterPosition());
+                playerItemDao.save(sourcePlayerItem);
+
+                return MovePlayerItemResponse.builder()
+                    .itemId(sourcePlayerItem.getItemId())
+                    .amount(movePlayerItemRequest.getAmount())
+                    .beforeLocation(movePlayerItemRequest.getBeforeLocation())
+                    .beforePosition(movePlayerItemRequest.getBeforePosition())
+                    .afterLocation(movePlayerItemRequest.getAfterLocation())
+                    .afterPosition(movePlayerItemRequest.getAfterPosition())
+                    .build();
+            } else {
+                PlayerItem newPlayerItem = new PlayerItem();
+                newPlayerItem.setPlayerId(playerId);
+                newPlayerItem.setItemId(sourcePlayerItem.getItemId());
+                newPlayerItem.setLocation(movePlayerItemRequest.getAfterLocation());
+                newPlayerItem.setPosition(movePlayerItemRequest.getAfterPosition());
+                newPlayerItem.setAmount(movePlayerItemRequest.getAmount());
+                playerItemDao.save(newPlayerItem);
+            }
         }
 
         sourcePlayerItem.setAmount(sourcePlayerItem.getAmount() - movePlayerItemRequest.getAmount());
@@ -263,9 +363,22 @@ public class PlayerItemService {
         if (location == null) {
             throw new IllegalArgumentException(PlayerItemDefiner.ERROR_LOCATION_REQUIRED);
         }
-        
-        playerItemDao.deleteByPlayerIdAndLocation(playerId, location);
+
+        Set<Long> equippedIds = getEquippedPlayerItemIds(playerId);
+        Set<Long> keptIds = new HashSet<>();
+        List<PlayerItem> existingLocationItems = playerItemDao.findByPlayerId(playerId).stream()
+            .filter(item -> location.equals(item.getLocation()))
+            .toList();
         if (request == null || request.getItems() == null || request.getItems().isEmpty()) {
+            for (PlayerItem existing : existingLocationItems) {
+                if (equippedIds.contains(existing.getId())) {
+                    existing.setLocation(0);
+                    existing.setPosition(-1);
+                    playerItemDao.save(existing);
+                } else {
+                    playerItemDao.delete(existing);
+                }
+            }
             return;
         }
 
@@ -288,13 +401,56 @@ public class PlayerItemService {
                 throw new IllegalArgumentException(PlayerItemDefiner.ERROR_MAX_AMOUNT_EXCEEDED);
             }
 
-            PlayerItem playerItem = new PlayerItem();
+            PlayerItem playerItem = null;
+            if (entry.getPlayerItemId() != null) {
+                playerItem = playerItemDao.findById(entry.getPlayerItemId())
+                    .filter(itemRecord -> itemRecord.getPlayerId().equals(playerId))
+                    .orElseThrow(() -> new IllegalArgumentException(PlayerItemDefiner.ERROR_ITEM_NOT_FOUND));
+            }
+            if (playerItem == null) {
+                playerItem = new PlayerItem();
+            }
             playerItem.setPlayerId(playerId);
             playerItem.setItemId(entry.getItemId());
             playerItem.setLocation(location);
             playerItem.setPosition(entry.getPosition());
             playerItem.setAmount(amount);
-            playerItemDao.save(playerItem);
+            PlayerItem saved = playerItemDao.save(playerItem);
+            keptIds.add(saved.getId());
+        }
+
+        for (PlayerItem existing : existingLocationItems) {
+            if (keptIds.contains(existing.getId())) {
+                continue;
+            }
+            if (equippedIds.contains(existing.getId())) {
+                existing.setLocation(0);
+                existing.setPosition(-1);
+                playerItemDao.save(existing);
+            } else {
+                playerItemDao.delete(existing);
+            }
+        }
+    }
+
+    private Set<Long> getEquippedPlayerItemIds(Long playerId) {
+        Set<Long> ids = new HashSet<>();
+        Optional<PlayerEquipment> equipment = playerEquipmentDao.findById(playerId);
+        if (equipment.isEmpty()) {
+            return ids;
+        }
+
+        addIfPresent(ids, equipment.get().getHeadId());
+        addIfPresent(ids, equipment.get().getChestId());
+        addIfPresent(ids, equipment.get().getWeaponId());
+        addIfPresent(ids, equipment.get().getOffHandId());
+        addIfPresent(ids, equipment.get().getShoesId());
+        return ids;
+    }
+
+    private static void addIfPresent(Set<Long> ids, Long id) {
+        if (id != null) {
+            ids.add(id);
         }
     }
 

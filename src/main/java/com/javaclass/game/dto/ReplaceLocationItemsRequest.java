@@ -17,6 +17,7 @@ public class ReplaceLocationItemsRequest {
     @Setter
     @NoArgsConstructor
     public static class ReplaceLocationItemEntry {
+        private Long playerItemId;
         private Long itemId;
         private Integer amount;
         private Integer position;

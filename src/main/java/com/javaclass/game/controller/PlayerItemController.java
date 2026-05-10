@@ -95,7 +95,7 @@ public class PlayerItemController {
         @RequestHeader("Authorization") String authorizationHeader,
         @RequestBody MovePlayerItemRequest movePlayerItemRequest
     ) {
-        if (movePlayerItemRequest.getItemId() == null) {
+        if (movePlayerItemRequest.getPlayerItemId() == null && movePlayerItemRequest.getItemId() == null) {
             return ResponseEntity
                 .badRequest()
                 .body(ApiResponse.failure(400, PlayerItemDefiner.ERROR_ITEM_ID_REQUIRED));
