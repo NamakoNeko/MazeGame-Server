@@ -18,5 +18,6 @@ public class AuthDefiner {
     public static final String ERROR_NICKNAME_REQUIRED         = "暱稱為必填欄位";
     public static final String ERROR_EMAIL_REQUIRED            = "Email為必填欄位";
     public static final String ERROR_INVALID_CREDENTIALS       = "帳號或密碼錯誤";
+    public static final String ERROR_PLAYER_BANNED             = "帳號已被封鎖";
     public static final String ERROR_ACCOUNT_ALREADY_EXISTS    = "帳號已被使用";
 }

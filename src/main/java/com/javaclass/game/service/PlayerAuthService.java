@@ -9,6 +9,7 @@ import com.javaclass.game.model.Player;
 import com.javaclass.game.model.PlayerEquipment;
 import com.javaclass.game.model.PlayerStats;
 import com.javaclass.game.utility.JwtUtility;
+import com.javaclass.game.utility.PlayerBannedException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +39,11 @@ public class PlayerAuthService {
         boolean isPasswordCorrect = passwordEncoder.matches(password, player.getPassword());
         if (!isPasswordCorrect) {
             throw new IllegalArgumentException(AuthDefiner.ERROR_INVALID_CREDENTIALS);
+        }
+
+        boolean isBanned = "BANNED".equals(player.getStatus());
+        if (isBanned) {
+            throw new PlayerBannedException(AuthDefiner.ERROR_PLAYER_BANNED);
         }
 
         String token = jwtUtility.generatePlayerToken(player.getId());

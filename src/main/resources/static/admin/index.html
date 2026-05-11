@@ -324,7 +324,7 @@
                     <span class="eyebrow">Account</span>
                     <h2>新增後台帳號</h2>
                 </div>
-                <button class="icon-button" value="cancel" aria-label="關閉">×</button>
+                <button class="icon-button" type="button" aria-label="關閉" onclick="document.getElementById('accountDialog').close(); document.getElementById('accountForm').reset();">×</button>
             </header>
             <label><span>帳號</span><input id="newAdminAccountInput" type="text" required></label>
             <label><span>密碼</span><input id="newAdminPasswordInput" type="password" required></label>
@@ -338,7 +338,7 @@
             </label>
             <p class="form-message" id="accountMessage" role="status"></p>
             <footer>
-                <button class="ghost-button" value="cancel">取消</button>
+                <button class="ghost-button" type="button" onclick="document.getElementById('accountDialog').close(); document.getElementById('accountForm').reset();">取消</button>
                 <button class="primary-button" type="submit">建立</button>
             </footer>
         </form>

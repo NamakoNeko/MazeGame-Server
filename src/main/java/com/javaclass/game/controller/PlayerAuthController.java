@@ -6,6 +6,7 @@ import com.javaclass.game.dto.PlayerRegisterRequest;
 import com.javaclass.game.dto.PlayerRegisterResponse;
 import com.javaclass.game.service.PlayerAuthService;
 import com.javaclass.game.utility.ApiResponse;
+import com.javaclass.game.utility.PlayerBannedException;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -43,6 +44,10 @@ public class PlayerAuthController {
                 loginRequest.getPassword()
             );
             return ResponseEntity.ok(ApiResponse.success(playerLoginResponse));
+        } catch (PlayerBannedException playerBannedException) {
+            return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.failure(403, playerBannedException.getMessage()));
         } catch (IllegalArgumentException invalidCredentialsException) {
             return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
